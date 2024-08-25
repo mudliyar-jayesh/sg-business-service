@@ -17,6 +17,11 @@ type OsReportFilter struct {
     Limit int64
     Offset int64
     Groups []string
+    OnlyPending bool
+    OnlyDue bool
+    OnlyOverDue bool
+    DueDays int
+    OverDueDays int
 }
 
 func GetCachedGroups(res http.ResponseWriter, req *http.Request) {
@@ -80,7 +85,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         http.Error(res, "Unable to read request body", http.StatusBadRequest)
         return
     }
-    
+
     if len(reqBody.Groups) > 0 {
         groups = utils.Intersection(groups, reqBody.Groups)
     }
@@ -90,6 +95,8 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         "LedgerGroupName": bson.M {
             "$in": groups,
         },
+        "ClosingBal": bson.M {"$ne": nil },
+        "ClosingBal.IsDebit": isDebit,
     }
 
     if len(reqBody.PartyName) > 0 {
@@ -118,11 +125,66 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         UsePagination: reqBody.Limit != 0 && reqBody.Offset != 0,
         Limit: reqBody.Limit,
         Offset: reqBody.Offset,
+        Projection: bson.M{
+            "LedgerName": 1,
+            "LedgerGroupName": 1,
+            "BillDate.Date": 1,
+            "BillCreditPeriod.DueDate": 1,
+            "ClosingBal.Amount": 1,
+            "_id": 0,
+        },
     }
+
     var results handlers.DocumentResponse= mongoHandler.FindDocuments(docFilter)
 
-    //groupedDocs := utils.GroupBy(results.Data, "LedgerName")
+    /*
+    var bills []interface{}
+    for _, data := range results.Data {
 
+        var dueDateStr string
+
+        if billCreditPeriod, ok := data["BillCreditPeriod"].(map[string]interface{}); ok {
+            if dueDate, ok := billCreditPeriod["DueDate"].(string); ok && dueDate != "" {
+                dueDateStr = dueDate
+            }
+        }
+
+        if dueDateStr == "" {
+            if billDate, ok := data["BillDate"].(map[string]interface{}); ok {
+                if date, ok := billDate["Date"].(string); ok && date != "" {
+                    dueDateStr = date
+                }
+            }
+        }
+
+        if dueDateStr == "" {
+            fmt.Println("No due date found")
+            return
+        }
+
+        // Parse the DueDate
+        dueDate, err := time.Parse(time.RFC3339, dueDateStr)
+        if err != nil {
+            fmt.Println("Error parsing DueDate:", err)
+            return
+        }
+
+        // Get today's date
+        today := time.Now().UTC()
+
+        // Calculate the difference in days
+        daysUntilDue := int(dueDate.Sub(today).Hours() / 24)
+
+        var overview = OsOverview{
+            PartyName: data["LedgerName"].(string),
+        }
+        if daysUntilDue < reqBody.DueDays {
+        }
+ 
+        bills = append(bills, overview)
+    }
+
+    */
     var temp = Temp {
         Data:  results.Data,
         Count: len(results.Data),
@@ -144,4 +206,10 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
 type Temp struct {
     Data interface{}
     Count int
+}
+type OsOverview struct {
+    PartyName string
+    PendingAmount float64
+    OverDueAmount float64
+    DueAmount float64
 }

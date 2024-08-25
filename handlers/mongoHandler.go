@@ -16,6 +16,7 @@ type DocumentFilter struct {
     UsePagination bool;
     Limit int64;
     Offset int64;
+    Projection bson.M;
 }
 
 type DocumentResponse struct {
@@ -52,12 +53,14 @@ func NewMongoHandler(collection *mongo.Collection) *MongoHandler {
 
 
 func (handler *MongoHandler) FindDocuments(docFilter DocumentFilter) DocumentResponse {
-    var findOptions *options.FindOptions
+    findOptions := options.Find()
     if docFilter.UsePagination {
-        findOptions = &options.FindOptions{
-            Skip: &docFilter.Offset,
-            Limit: &docFilter.Limit,
-        }
+        findOptions.SetSkip(docFilter.Offset)
+        findOptions.SetLimit(docFilter.Limit)
+    }
+
+    if docFilter.Projection != nil {
+        findOptions.SetProjection(docFilter.Projection)
     }
     cursor, err := handler.collection.Find(docFilter.Ctx, docFilter.Filter, findOptions)
     if err != nil {
