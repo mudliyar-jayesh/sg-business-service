@@ -1,11 +1,13 @@
 package endpoints
 import (
     "io"
+    "time"
     "strings"
     "encoding/json"
     "context"
     "net/http"
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/bson/primitive"
     "sg-business-service/handlers"
     "sg-business-service/utils"
     "strconv"
@@ -128,66 +130,61 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         Projection: bson.M{
             "LedgerName": 1,
             "LedgerGroupName": 1,
-            "BillDate.Date": 1,
-            "BillCreditPeriod.DueDate": 1,
-            "ClosingBal.Amount": 1,
+            "BillDate": "$BillDate.Date",
+            "DueDate": "$BillCreditPeriod.DueDate",
+            "Amount": "$ClosingBal.Amount",
             "_id": 0,
         },
     }
 
     var results handlers.DocumentResponse= mongoHandler.FindDocuments(docFilter)
 
-    /*
-    var bills []interface{}
-    for _, data := range results.Data {
+    var bills []Bill
+    istLocation, _ := time.LoadLocation("Asia/Kolkata")
+    for _, item := range results.Data {
+        billDateValue := item["BillDate"].(primitive.DateTime).Time()
+        billDate := billDateValue.In(istLocation).Format("2006-01-02 15:04:05")
 
-        var dueDateStr string
-
-        if billCreditPeriod, ok := data["BillCreditPeriod"].(map[string]interface{}); ok {
-            if dueDate, ok := billCreditPeriod["DueDate"].(string); ok && dueDate != "" {
-                dueDateStr = dueDate
-            }
+        var dueDate string
+        dueDateValue := item["DueDate"]
+        if dueDateValue == nil {
+            dueDate = billDate
+        } else {
+           dueDate = dueDateValue.(primitive.DateTime).Time().In(istLocation).Format("2006-01-02 15:04:05")
         }
 
-        if dueDateStr == "" {
-            if billDate, ok := data["BillDate"].(map[string]interface{}); ok {
-                if date, ok := billDate["Date"].(string); ok && date != "" {
-                    dueDateStr = date
-                }
-            }
-        }
-
-        if dueDateStr == "" {
-            fmt.Println("No due date found")
-            return
-        }
-
-        // Parse the DueDate
-        dueDate, err := time.Parse(time.RFC3339, dueDateStr)
-        if err != nil {
-            fmt.Println("Error parsing DueDate:", err)
-            return
-        }
-
-        // Get today's date
+        layout := "2006-01-02 15:04:05"
+        parsedTime, _:= time.Parse(layout, dueDate)
         today := time.Now().UTC()
 
-        // Calculate the difference in days
-        daysUntilDue := int(dueDate.Sub(today).Hours() / 24)
+        // Calculate the difference
+        diff := today.Sub(parsedTime)
 
-        var overview = OsOverview{
-            PartyName: data["LedgerName"].(string),
+        // Get the difference in days
+        days := int(diff.Hours() / 24)
+
+        var bill Bill = Bill {
+            LedgerName: item["LedgerName"].(string),
+            LedgerGroupName: item["LedgerGroupName"].(string),
+            DueDate: dueDate,
+            BillDate: billDate,
+            DelayDays: days,
         }
-        if daysUntilDue < reqBody.DueDays {
+        var amount = parseFloat64(item["Amount"])
+        if days >= reqBody.DueDays && days <= reqBody.OverDueDays {
+            bill.DueAmount = amount
+        } else if days > reqBody.OverDueDays {
+            bill.OverDueAmount = amount
+        } else {
+            bill.Amount = amount
         }
- 
-        bills = append(bills, overview)
+
+        bills = append(bills, bill)
     }
 
-    */
     var temp = Temp {
-        Data:  results.Data,
-        Count: len(results.Data),
+        Data:  bills,
+        Count: len(bills),
     }
 
     responseData, err := json.Marshal(temp)
@@ -202,14 +199,36 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
     res.Write(responseData)
 
 }
+func parseFloat64(value interface{}) float64 {
+    var result float64
+    switch v := value.(type) {
+    case float64:
+        result = v
+    case int:
+        result = float64(v)
+    case string:
+        parsed, err := strconv.ParseFloat(v, 64)
+        if err != nil {
+            return 0 // Return default value on error
+        }
+        result = parsed
+    default:
+        return 0 // Return default value if type is not handled
+    }
+    return result
+}
 
 type Temp struct {
     Data interface{}
     Count int
 }
-type OsOverview struct {
-    PartyName string
-    PendingAmount float64
-    OverDueAmount float64
+type Bill struct {
+    LedgerName string 
+    LedgerGroupName string 
+    BillDate string
+    DueDate string
+    DelayDays int
+    Amount float64
     DueAmount float64
+    OverDueAmount float64
 }
