@@ -124,7 +124,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
     docFilter := handlers.DocumentFilter {
         Ctx: context.TODO(),
         Filter:filter,
-        UsePagination: reqBody.Limit != 0 && reqBody.Offset != 0,
+        UsePagination: reqBody.Limit != 0,
         Limit: reqBody.Limit,
         Offset: reqBody.Offset,
         Projection: bson.M{
