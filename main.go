@@ -18,6 +18,6 @@ func main() {
     // outstanding endpoints
     http.HandleFunc("/os/get/groups", endpoints.GetCachedGroups)
     http.HandleFunc("/os/get/report", endpoints.GetOutstandingReport)
-    fmt.Println("Server starting on port 8080...")
-    log.Fatal(http.ListenAndServe(":8080", nil))
+    fmt.Println("Server starting on port 35001...")
+    log.Fatal(http.ListenAndServe(":35001", nil))
 }

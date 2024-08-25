@@ -8,6 +8,7 @@ import (
     "go.mongodb.org/mongo-driver/bson"
     "sg-business-service/handlers"
     "sg-business-service/utils"
+    "strconv"
 )
 
 type OsReportFilter struct {
@@ -15,11 +16,24 @@ type OsReportFilter struct {
     SearchText string
     Limit int64
     Offset int64
+    Groups []string
 }
 
 func GetCachedGroups(res http.ResponseWriter, req *http.Request) {
     companyId := req.Header.Get("CompanyId")
+
+    isDebitStr := req.URL.Query().Get("isDebit")
+    if isDebitStr == "" {
+        isDebitStr = "true"
+    }
+    var isDebit bool
+    isDebit, _ = strconv.ParseBool(isDebitStr)
+
     var parentName string = "Current Assets"
+    if !isDebit {
+        parentName = "Current Liabilities"
+    }
+
     var groups = handlers.CachedGroups.GetChildrenNames(companyId, parentName)
     responseData, err := json.Marshal(groups)
     if err != nil {
@@ -35,9 +49,23 @@ func GetCachedGroups(res http.ResponseWriter, req *http.Request) {
 
 
 func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
-    companyId := req.Header.Get("CompanyId")
     var collection = handlers.GetCollection("NewTallyDesktopSync", "Bills")
     var mongoHandler = handlers.NewMongoHandler(collection)
+
+    companyId := req.Header.Get("CompanyId")
+    isDebitStr := req.URL.Query().Get("isDebit")
+    if isDebitStr == "" {
+        isDebitStr = "true"
+    }
+    var isDebit bool
+    isDebit, _ = strconv.ParseBool(isDebitStr)
+
+    var parentName string = "Current Assets"
+    if !isDebit {
+        parentName = "Current Liabilities"
+    }
+
+    var groups = handlers.CachedGroups.GetChildrenNames(companyId, parentName)
 
     body, err := io.ReadAll(req.Body) 
     if err != nil {
@@ -53,9 +81,15 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         return
     }
     
+    if len(reqBody.Groups) > 0 {
+        groups = utils.Intersection(groups, reqBody.Groups)
+    }
 
     var filter = bson.M {
         "CompanyId": companyId,
+        "LedgerGroupName": bson.M {
+            "$in": groups,
+        },
     }
 
     if len(reqBody.PartyName) > 0 {
@@ -87,16 +121,27 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
     }
     var results handlers.DocumentResponse= mongoHandler.FindDocuments(docFilter)
 
-    groupedDocs := utils.GroupBy(results.Data, "LedgerName")
+    //groupedDocs := utils.GroupBy(results.Data, "LedgerName")
 
-    responseData, err := json.Marshal(groupedDocs)
+    var temp = Temp {
+        Data:  results.Data,
+        Count: len(results.Data),
+    }
+
+    responseData, err := json.Marshal(temp)
     if err != nil {
         http.Error(res, "Error encoding response data", http.StatusInternalServerError)
         return
     }
 
+
     res.Header().Set("Content-Type", "application/json")
     res.WriteHeader(http.StatusOK)
     res.Write(responseData)
 
+}
+
+type Temp struct {
+    Data interface{}
+    Count int
 }
