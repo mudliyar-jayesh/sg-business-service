@@ -133,6 +133,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
             "BillDate": "$BillDate.Date",
             "DueDate": "$BillCreditPeriod.DueDate",
             "Amount": "$ClosingBal.Amount",
+            "Name": "$Name",
             "_id": 0,
         },
     }
@@ -166,6 +167,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         var bill Bill = Bill {
             LedgerName: item["LedgerName"].(string),
             LedgerGroupName: item["LedgerGroupName"].(string),
+            BillName: item["Name"].(string),
             DueDate: dueDate,
             BillDate: billDate,
             DelayDays: days,
@@ -225,6 +227,7 @@ type Temp struct {
 type Bill struct {
     LedgerName string 
     LedgerGroupName string 
+    BillName string
     BillDate string
     DueDate string
     DelayDays int
