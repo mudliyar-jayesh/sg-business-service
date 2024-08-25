@@ -17,12 +17,27 @@ type OsReportFilter struct {
     Offset int64
 }
 
+func GetCachedGroups(res http.ResponseWriter, req *http.Request) {
+    companyId := req.Header.Get("CompanyId")
+    var parentName string = "Current Assets"
+    var groups = handlers.CachedGroups.GetChildrenNames(companyId, parentName)
+    responseData, err := json.Marshal(groups)
+    if err != nil {
+        http.Error(res, "Error encoding response data", http.StatusInternalServerError)
+        return
+    }
+
+    res.Header().Set("Content-Type", "application/json")
+    res.WriteHeader(http.StatusOK)
+    res.Write(responseData)
+
+}
+
 
 func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
     companyId := req.Header.Get("CompanyId")
     var collection = handlers.GetCollection("NewTallyDesktopSync", "Bills")
     var mongoHandler = handlers.NewMongoHandler(collection)
-
 
     body, err := io.ReadAll(req.Body) 
     if err != nil {
@@ -37,6 +52,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         http.Error(res, "Unable to read request body", http.StatusBadRequest)
         return
     }
+    
 
     var filter = bson.M {
         "CompanyId": companyId,
