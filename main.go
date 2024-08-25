@@ -18,6 +18,10 @@ func main() {
     // outstanding endpoints
     http.HandleFunc("/os/get/groups", endpoints.GetCachedGroups)
     http.HandleFunc("/os/get/report", endpoints.GetOutstandingReport)
+
+    // inventory endpoints
+    http.HandleFunc("/stock-items/get/report", endpoints.GetStockItemReport)
+
     fmt.Println("Server starting on port 35001...")
     log.Fatal(http.ListenAndServe(":35001", nil))
 }
