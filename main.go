@@ -34,6 +34,7 @@ func main() {
     handlers.MakeGroupCache()
 
     // outstanding endpoints
+    http.Handle("/os/search/ledgers", corsMiddleware(http.HandlerFunc(endpoints.SearchLedgers)))
     http.Handle("/os/get/groups", corsMiddleware(http.HandlerFunc(endpoints.GetCachedGroups)))
     http.Handle("/os/get/report", corsMiddleware(http.HandlerFunc(endpoints.GetOutstandingReport)))
 

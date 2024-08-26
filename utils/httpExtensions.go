@@ -3,7 +3,18 @@ import (
     "io"
     "encoding/json"
     "net/http"
+    "strconv"
 )
+
+func GetBoolFromQuery(req *http.Request, queryParameter string) bool {
+    boolStr := req.URL.Query().Get(queryParameter)
+    if boolStr == "" {
+        boolStr = "true"
+    }
+    var value bool
+    value, _ = strconv.ParseBool(boolStr)
+    return value
+}
 
 func ReadRequestBody[T any](req *http.Request) (*T, error) {
     body, err := io.ReadAll(req.Body)

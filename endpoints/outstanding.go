@@ -1,7 +1,6 @@
 package endpoints
 import (
     "time"
-    "strings"
     "encoding/json"
     "context"
     "net/http"
@@ -23,17 +22,64 @@ type OsReportFilter struct {
     OnlyOverDue bool
     DueDays int
     OverDueDays int
+    SearchKey string
+}
+
+func getFieldBySearchKey(searchKey string) string {
+    var fieldBySearchKey = make(map[string]string)
+    fieldBySearchKey["Party"] = "LedgerName"
+    fieldBySearchKey["Group"] = "LedgerGroupName"
+    fieldBySearchKey["Bill"] = "Name"
+
+    searchField, exists := fieldBySearchKey[searchKey]
+    if exists {
+        return searchField
+    }
+    return fieldBySearchKey["Party"]
+}
+
+func SearchLedgers(res http.ResponseWriter, req *http.Request) {
+    companyId := req.Header.Get("CompanyId")
+    searchKey := req.URL.Query().Get("searchKey")
+
+    var collection = handlers.GetCollection("NewTallyDesktopSync", "Ledgers")
+    var mongoHandler = handlers.NewMongoHandler(collection)
+
+    var filter = bson.M {
+        "GUID": bson.M {
+            "$regex": "^"+companyId,
+        },
+    }
+
+    var page int64= 25
+    var usePagination = true
+    if len(searchKey) > 0 {
+        page = 0
+        usePagination = false
+        filter["$and"] = utils.GenerateSearchFilter(searchKey, "Name")
+    }
+
+    docFilter := handlers.DocumentFilter {
+        Ctx: context.TODO(),
+        Filter:filter,
+        UsePagination: usePagination,
+        Limit: page,
+        Offset: 0,
+        Projection: bson.M{
+            "Name": 1,
+            "_id": 0,
+        },
+    }
+
+    var results handlers.DocumentResponse= mongoHandler.FindDocuments(docFilter)
+
+    response := utils.NewResponseStruct(results.Data, len(results.Data))
+    response.ToJson(res)
 }
 
 func GetCachedGroups(res http.ResponseWriter, req *http.Request) {
     companyId := req.Header.Get("CompanyId")
-
-    isDebitStr := req.URL.Query().Get("isDebit")
-    if isDebitStr == "" {
-        isDebitStr = "true"
-    }
-    var isDebit bool
-    isDebit, _ = strconv.ParseBool(isDebitStr)
+    isDebit := utils.GetBoolFromQuery(req, "isDebit")
 
     var parentName string = "Current Assets"
     if !isDebit {
@@ -57,12 +103,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
     var mongoHandler = handlers.NewMongoHandler(collection)
 
     companyId := req.Header.Get("CompanyId")
-    isDebitStr := req.URL.Query().Get("isDebit")
-    if isDebitStr == "" {
-        isDebitStr = "true"
-    }
-    var isDebit bool
-    isDebit, _ = strconv.ParseBool(isDebitStr)
+    isDebit := utils.GetBoolFromQuery(req, "isDebit")
 
     var parentName string = "Current Assets"
     if !isDebit {
@@ -93,22 +134,9 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
     if len(reqBody.PartyName) > 0 {
         filter["LedgerName"] = reqBody.PartyName
     } else if len(reqBody.SearchText) > 0 {
-        tokens := strings.Fields(reqBody.SearchText)
-
-        var regexFilters []bson.M 
-
-        for _, token := range tokens {
-            regexFilters  = append(regexFilters, bson.M {
-                "LedgerName": bson.M {
-                    "$regex": token,
-                    "$options": "i", //case insensitive
-                },
-            })
-        }
-
-        filter["$and"] = regexFilters
+        var searchField = getFieldBySearchKey(reqBody.SearchKey)
+        filter["$and"] = utils.GenerateSearchFilter(reqBody.SearchText, searchField)
     }
-
 
     docFilter := handlers.DocumentFilter {
         Ctx: context.TODO(),
@@ -173,9 +201,9 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         bills = append(bills, bill)
     }
 
-    var groupedBills = utils.GroupByKey[Bill](bills, "LedgerName")
+    //var groupedBills = utils.GroupByKey[Bill](bills, "LedgerName")
 
-    response := utils.NewResponseStruct(groupedBills, len(groupedBills))
+    response := utils.NewResponseStruct(bills, len(bills))
     response.ToJson(res)
 }
 func parseFloat64(value interface{}) float64 {
