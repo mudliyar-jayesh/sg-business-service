@@ -55,7 +55,7 @@ func NewMongoHandler(collection *mongo.Collection) *MongoHandler {
 func (handler *MongoHandler) FindDocuments(docFilter DocumentFilter) DocumentResponse {
     findOptions := options.Find()
     if docFilter.UsePagination {
-        findOptions.SetSkip(docFilter.Offset)
+        findOptions.SetSkip(docFilter.Offset * docFilter.Limit)
         findOptions.SetLimit(docFilter.Limit)
     }
 
