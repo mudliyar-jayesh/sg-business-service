@@ -1,6 +1,5 @@
 package endpoints
 import (
-    "io"
     "time"
     "strings"
     "encoding/json"
@@ -20,7 +19,7 @@ type OsReportFilter struct {
     Offset int64
     Groups []string
     OnlyPending bool
-    OnlyDue bool
+    OnlyDue bool 
     OnlyOverDue bool
     DueDays int
     OverDueDays int
@@ -48,10 +47,8 @@ func GetCachedGroups(res http.ResponseWriter, req *http.Request) {
         return
     }
 
-    res.Header().Set("Content-Type", "application/json")
-    res.WriteHeader(http.StatusOK)
-    res.Write(responseData)
-
+    response := utils.NewResponseStruct(responseData, len(responseData))
+    response.ToJson(res)
 }
 
 
@@ -74,15 +71,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
 
     var groups = handlers.CachedGroups.GetChildrenNames(companyId, parentName)
 
-    body, err := io.ReadAll(req.Body) 
-    if err != nil {
-        http.Error(res, "Unable to read request body", http.StatusBadRequest)
-        return
-    }
-    defer req.Body.Close()
-
-    var reqBody OsReportFilter
-    err = json.Unmarshal(body, &reqBody)
+    reqBody, err := utils.ReadRequestBody[OsReportFilter](req)
     if err != nil {
         http.Error(res, "Unable to read request body", http.StatusBadRequest)
         return
@@ -184,22 +173,10 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         bills = append(bills, bill)
     }
 
-    var temp = Temp {
-        Data:  bills,
-        Count: len(bills),
-    }
+    var groupedBills = utils.GroupByKey[Bill](bills, "LedgerName")
 
-    responseData, err := json.Marshal(temp)
-    if err != nil {
-        http.Error(res, "Error encoding response data", http.StatusInternalServerError)
-        return
-    }
-
-
-    res.Header().Set("Content-Type", "application/json")
-    res.WriteHeader(http.StatusOK)
-    res.Write(responseData)
-
+    response := utils.NewResponseStruct(groupedBills, len(groupedBills))
+    response.ToJson(res)
 }
 func parseFloat64(value interface{}) float64 {
     var result float64
