@@ -17,6 +17,7 @@ type DocumentFilter struct {
     Limit int64;
     Offset int64;
     Projection bson.M;
+    Sorting bson.D;
 }
 
 type DocumentResponse struct {
@@ -61,6 +62,9 @@ func (handler *MongoHandler) FindDocuments(docFilter DocumentFilter) DocumentRes
 
     if docFilter.Projection != nil {
         findOptions.SetProjection(docFilter.Projection)
+    }
+    if docFilter.Sorting != nil {
+        findOptions.SetSort(docFilter.Sorting)
     }
     cursor, err := handler.collection.Find(docFilter.Ctx, docFilter.Filter, findOptions)
     if err != nil {

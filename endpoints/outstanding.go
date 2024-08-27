@@ -23,8 +23,28 @@ type OsReportFilter struct {
     DueDays int
     OverDueDays int
     SearchKey string
+    SortKey string;
+    SortOrder string;
+}
+func getValueBySortOrder(sortOrder string) int {
+    if len(sortOrder) > 0 && sortOrder == "desc" {
+        return -1
+    }
+    return 1
 }
 
+func getFieldBySortKey(sortKey string) string {
+    var fieldBySortKey = make(map[string]string)
+    fieldBySortKey["Party"] = "LedgerName"
+    fieldBySortKey["Group"] = "LedgerGroupName"
+    fieldBySortKey["Bill"] = "Name"
+
+    sortField, exists := fieldBySortKey[sortKey]
+    if exists {
+        return sortField
+    }
+    return fieldBySortKey["Party"]
+}
 func getFieldBySearchKey(searchKey string) string {
     var fieldBySearchKey = make(map[string]string)
     fieldBySearchKey["Party"] = "LedgerName"
@@ -152,6 +172,12 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
             "Amount": "$ClosingBal.Amount",
             "Name": "$Name",
             "_id": 0,
+        },
+        Sorting: bson.D {
+            {
+                Key: getFieldBySortKey(reqBody.SortKey),
+                Value: getValueBySortOrder(reqBody.SortOrder),
+            },
         },
     }
 
