@@ -5,6 +5,12 @@ import (
     "net/http"
     "strconv"
 )
+func GetValueBySortOrder(sortOrder string) int {
+    if len(sortOrder) > 0 && sortOrder == "desc" {
+        return -1
+    }
+    return 1
+}
 
 func GetBoolFromQuery(req *http.Request, queryParameter string) bool {
     boolStr := req.URL.Query().Get(queryParameter)

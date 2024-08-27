@@ -1,19 +1,46 @@
 package endpoints 
 import (
-    "io"
-    "strings"
-    "encoding/json"
     "context"
     "net/http"
     "go.mongodb.org/mongo-driver/bson"
     "sg-business-service/handlers"
+    "sg-business-service/utils"
 )
 
 type ItemReportFilter struct {
     StockGroups []string
     SearchText string
+    SearchKey string
+    SortKey string;
+    SortOrder string;
     Limit int64
     Offset int64
+}
+
+func getItemFieldBySortKey(sortKey string) string {
+    var fieldBySortKey = make(map[string]string)
+    fieldBySortKey["Item"] = "Name"
+    fieldBySortKey["Group"] = "StockGroup"
+    fieldBySortKey["Quantity"] = "ClosingBal.Number"
+    fieldBySortKey["Rate"] = "ClosingRate.RatePerUnit"
+    fieldBySortKey["Amount"] = "ClosingValue.Amount"
+
+    sortField, exists := fieldBySortKey[sortKey]
+    if exists {
+        return sortField
+    }
+    return fieldBySortKey["Item"]
+}
+func getItemFieldBySearchKey(searchKey string) string {
+    var fieldBySearchKey = make(map[string]string)
+    fieldBySearchKey["Item"] = "Name"
+    fieldBySearchKey["Group"] = "StockGroup"
+
+    searchField, exists := fieldBySearchKey[searchKey]
+    if exists {
+        return searchField
+    }
+    return fieldBySearchKey["Item"]
 }
 
 
@@ -23,15 +50,7 @@ func GetStockItemReport(res http.ResponseWriter, req *http.Request) {
 
     companyId := req.Header.Get("CompanyId")
 
-    body, err := io.ReadAll(req.Body) 
-    if err != nil {
-        http.Error(res, "Unable to read request body", http.StatusBadRequest)
-        return
-    }
-    defer req.Body.Close()
-
-    var reqBody ItemReportFilter
-    err = json.Unmarshal(body, &reqBody)
+    reqBody, err := utils.ReadRequestBody[ItemReportFilter](req)
     if err != nil {
         http.Error(res, "Unable to read request body", http.StatusBadRequest)
         return
@@ -48,20 +67,8 @@ func GetStockItemReport(res http.ResponseWriter, req *http.Request) {
         }
     }
     if len(reqBody.SearchText) > 0 {
-        tokens := strings.Fields(reqBody.SearchText)
-
-        var regexFilters []bson.M 
-
-        for _, token := range tokens {
-            regexFilters  = append(regexFilters, bson.M {
-                "Name": bson.M {
-                    "$regex": token,
-                    "$options": "i", //case insensitive
-                },
-            })
-        }
-
-        filter["$and"] = regexFilters
+        var searchField = getItemFieldBySearchKey(reqBody.SearchKey)
+        filter["$and"] = utils.GenerateSearchFilter(reqBody.SearchText, searchField)
     }
     docFilter := handlers.DocumentFilter {
         Ctx: context.TODO(),
@@ -69,19 +76,17 @@ func GetStockItemReport(res http.ResponseWriter, req *http.Request) {
         UsePagination: reqBody.Limit != 0,
         Limit: reqBody.Limit,
         Offset: reqBody.Offset,
+        Sorting: bson.D {
+            {
+                Key: getItemFieldBySortKey(reqBody.SortKey),
+                Value: utils.GetValueBySortOrder(reqBody.SortOrder),
+            },
+        },
     }
 
     var results handlers.DocumentResponse = mongoHandler.FindDocuments(docFilter)
 
-    responseData, err := json.Marshal(results.Data)
-    if err != nil {
-        http.Error(res, "Error encoding response data", http.StatusInternalServerError)
-        return
-    }
-
-
-    res.Header().Set("Content-Type", "application/json")
-    res.WriteHeader(http.StatusOK)
-    res.Write(responseData)
+    response := utils.NewResponseStruct(results.Data, len(results.Data))
+    response.ToJson(res)
 }
 

@@ -26,12 +26,6 @@ type OsReportFilter struct {
     SortKey string;
     SortOrder string;
 }
-func getValueBySortOrder(sortOrder string) int {
-    if len(sortOrder) > 0 && sortOrder == "desc" {
-        return -1
-    }
-    return 1
-}
 
 func getFieldBySortKey(sortKey string) string {
     var fieldBySortKey = make(map[string]string)
@@ -176,7 +170,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         Sorting: bson.D {
             {
                 Key: getFieldBySortKey(reqBody.SortKey),
-                Value: getValueBySortOrder(reqBody.SortOrder),
+                Value: utils.GetValueBySortOrder(reqBody.SortOrder),
             },
         },
     }
