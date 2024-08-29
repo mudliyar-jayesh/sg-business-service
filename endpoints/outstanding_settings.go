@@ -106,3 +106,26 @@ func GetSetting(res http.ResponseWriter, req *http.Request) {
 
 }
 
+func SendEmail(res http.ResponseWriter, req *http.Request) {
+
+    to := make([]string, 1)
+    to[0] = "softgen.aquib.shaikh@gmail.com"
+    cc := make([]string, 1)
+    cc[0] = "jayeshmudlyiar2112000@gmail.com"
+
+    var emailSettings = models.EmailSettings {
+      To: to,
+      Cc: cc,
+      SmtpPort:"587",
+      SmtpServer: "smtp.gmail.com",
+      Subject: "Sample Email",
+      Body: "Here is a sample email",
+      BodyType: 1,
+    }
+    err := handlers.SendEmail(emailSettings)
+    if err != nil  {
+        fmt.Println("Failed to send email:", err)
+        http.Error(res, "Could not send email", http.StatusBadRequest)
+    }
+}
+
