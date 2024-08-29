@@ -11,15 +11,23 @@ import (
     "strconv"
 )
 
+
+type DueDayFilter int
+
+const (
+    AllBills DueDayFilter = iota
+    PendingBills
+    DueBills
+    OverDueBills
+)
+
 type OsReportFilter struct {
     PartyName string
     SearchText string
     Limit int64
     Offset int64
     Groups []string
-    OnlyPending bool
-    OnlyDue bool 
-    OnlyOverDue bool
+    DueFilter DueDayFilter
     DueDays int
     OverDueDays int
     SearchKey string
@@ -210,14 +218,21 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
             DelayDays: days,
         }
         var amount = parseFloat64(item["Amount"])
+        var dueFilter = AllBills
         if days >= reqBody.DueDays && days <= reqBody.OverDueDays {
             bill.DueAmount = amount
+            dueFilter = DueBills
         } else if days > reqBody.OverDueDays {
             bill.OverDueAmount = amount
+            dueFilter = OverDueBills
         } else {
             bill.Amount = amount
+            dueFilter = PendingBills
         }
 
+        if reqBody.DueFilter != AllBills && reqBody.DueFilter != dueFilter{
+            continue
+        }
         bills = append(bills, bill)
     }
 
