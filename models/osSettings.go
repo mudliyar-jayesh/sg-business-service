@@ -21,6 +21,8 @@ type OsShareSettings struct {
     ID primitive.ObjectID `bson:"_id,omitempty"`
     CompanyId string `bson:"CompanyId"`
     CutOffDate string `bson:"CutOffDate"`
+    DueDays int `bson:"DueDays"`
+    OverDueDays int `bson:"OverDueDays"`
     SendAllDue bool `bson:"SendAllDue"`
     SendDueOnly bool `bson:"SendDueOnly"`
     EmailSetting EmailSettings `bson:"EmailSetting"`

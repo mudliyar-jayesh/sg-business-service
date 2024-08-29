@@ -124,6 +124,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
     var collection = handlers.GetCollection("NewTallyDesktopSync", "Bills")
     var mongoHandler = handlers.NewMongoHandler(collection)
 
+
     companyId := req.Header.Get("CompanyId")
     isDebit := utils.GetBoolFromQuery(req, "isDebit")
 
@@ -185,6 +186,32 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
 
     var results handlers.DocumentResponse= mongoHandler.FindDocuments(docFilter)
 
+    settingCollection := handlers.GetCollection("BMRM", "OutstandingSettings")
+    var settingsHandler = handlers.NewMongoHandler(settingCollection)
+
+    docFilter = handlers.DocumentFilter {
+        Ctx: context.TODO(),
+        Filter: bson.M {
+            "CompanyId": companyId,
+        },
+        UsePagination: false,
+        Limit: 0,
+        Offset: 0,
+    }
+
+    settings := settingsHandler.FindDocuments(docFilter)
+    if settings.Err != nil {
+        http.Error(res, "No Data", http.StatusBadRequest)
+        return;
+    }
+
+    var dueDays int32
+    var overDueDays int32
+
+    if len(results.Data) > 0 {
+        dueDays = settings.Data[0]["DueDays"].(int32)
+        overDueDays= settings.Data[0]["OverDueDays"].(int32)
+    }
     var bills []Bill
     istLocation, _ := time.LoadLocation("Asia/Kolkata")
     for _, item := range results.Data {
@@ -207,7 +234,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         diff := today.Sub(parsedTime)
 
         // Get the difference in days
-        days := int(diff.Hours() / 24)
+        days := int32(diff.Hours() / 24)
 
         var bill Bill = Bill {
             LedgerName: item["LedgerName"].(string),
@@ -219,10 +246,10 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         }
         var amount = parseFloat64(item["Amount"])
         var dueFilter = AllBills
-        if days >= reqBody.DueDays && days <= reqBody.OverDueDays {
+        if days >= dueDays && days <= overDueDays {
             bill.DueAmount = amount
             dueFilter = DueBills
-        } else if days > reqBody.OverDueDays {
+        } else if days > overDueDays {
             bill.OverDueAmount = amount
             dueFilter = OverDueBills
         } else {
@@ -270,7 +297,7 @@ type Bill struct {
     BillName string
     BillDate string
     DueDate string
-    DelayDays int
+    DelayDays int32
     Amount float64
     DueAmount float64
     OverDueAmount float64
