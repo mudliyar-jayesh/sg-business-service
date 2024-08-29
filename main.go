@@ -33,6 +33,11 @@ func main() {
     handlers.ConnectToMongo(mongoConfig)
     handlers.MakeGroupCache()
 
+    // outstanding settings endpoints 
+    http.Handle("/os-setting/create", corsMiddleware(http.HandlerFunc(endpoints.CreateOsSetting)))
+    http.Handle("/os-setting/update", corsMiddleware(http.HandlerFunc(endpoints.UpdateOsSetting)))
+    http.Handle("/os-setting/get", corsMiddleware(http.HandlerFunc(endpoints.GetSetting)))
+
     // outstanding endpoints
     http.Handle("/os/search/ledgers", corsMiddleware(http.HandlerFunc(endpoints.SearchLedgers)))
     http.Handle("/os/get/groups", corsMiddleware(http.HandlerFunc(endpoints.GetCachedGroups)))

@@ -2,8 +2,10 @@ package handlers
 
 import (
     "fmt"
+    "time"
     "context"
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/bson/primitive"
     "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
     "sg-business-service/utils"
@@ -40,7 +42,25 @@ func ConnectToMongo(cfg *config.MongoConfig) {
     fmt.Println("[*]Connected to Mongo")
 }
 
+func createCollectionIfNotExists(dbName string, collName string) error {
+    // Select the database and collection
+    collection := Client.Database(dbName).Collection(collName)
+
+    // Perform a write operation to ensure the collection is created
+    _, err := collection.InsertOne(context.TODO(), map[string]interface{}{
+        "initialized": time.Now(),
+    })
+    if err != nil {
+        return err
+    }
+
+    fmt.Printf("Collection '%s' in database '%s' created or already exists.\n", collName, dbName)
+    return nil
+}
+
+
 func GetCollection(db string, collection string) *mongo.Collection{
+    //createCollectionIfNotExists(db, collection)
     return Client.Database(db).Collection(collection)
 }
 
@@ -96,3 +116,32 @@ func (handler *MongoHandler) FindDocuments(docFilter DocumentFilter) DocumentRes
         Err: err,
     }
 }
+
+
+func InsertDocument[T any](dbName string, collName string, document T) (primitive.ObjectID, error) {
+    // Select the database and collection
+    collection := Client.Database(dbName).Collection(collName)
+
+    // Insert the document
+    result, err := collection.InsertOne(context.TODO(), document)
+    if err != nil {
+        return primitive.NilObjectID, err
+    }
+
+    // Get the inserted ID
+    insertedID := result.InsertedID.(primitive.ObjectID)
+    fmt.Printf("Inserted document with ID: %s\n", insertedID.Hex())
+    return insertedID, nil
+}
+
+func (handler *MongoHandler) UpdateDocument(dbName string, collectionName string, filter bson.M, update bson.M) {
+    // Select the database and collection
+    collection := Client.Database(dbName).Collection(collectionName)
+
+    // Update the document
+    _, err := collection.UpdateOne(context.TODO(), filter, update)
+    if err != nil {
+        utils.ErrorLogger.Fatal(err)
+    }
+}
+
