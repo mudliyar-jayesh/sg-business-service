@@ -105,3 +105,4 @@ func GetSetting(res http.ResponseWriter, req *http.Request) {
     response.ToJson(res);
 
 }
+
