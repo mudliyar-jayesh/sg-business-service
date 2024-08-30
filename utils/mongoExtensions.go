@@ -2,11 +2,17 @@ package utils
 
 import (
     "go.mongodb.org/mongo-driver/bson"
-    "strings"
+    "regexp"
+    //"strings"
 )
 
 func GenerateSearchFilter(searchText, searchKey string) []bson.M{
-    tokens := strings.Fields(searchText)
+	// Regular expression to match numbers, single letters, and words
+	re := regexp.MustCompile(`\d+|[a-zA-Z]+`)
+
+	// Find all matching tokens
+	tokens := re.FindAllString(searchText, -1)
+    //tokens := strings.Fields(searchText)
 
     var regexFilters []bson.M
 
