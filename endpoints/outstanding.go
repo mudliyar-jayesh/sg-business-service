@@ -1,7 +1,6 @@
 package endpoints
 import (
     "time"
-    "encoding/json"
     "context"
     "net/http"
     "go.mongodb.org/mongo-driver/bson"
@@ -116,13 +115,8 @@ func GetCachedGroups(res http.ResponseWriter, req *http.Request) {
     }
 
     var groups = handlers.CachedGroups.GetChildrenNames(companyId, parentName)
-    responseData, err := json.Marshal(groups)
-    if err != nil {
-        http.Error(res, "Error encoding response data", http.StatusInternalServerError)
-        return
-    }
 
-    response := utils.NewResponseStruct(responseData, len(responseData))
+    response := utils.NewResponseStruct(groups, len(groups))
     response.ToJson(res)
 }
 
