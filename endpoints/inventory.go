@@ -68,7 +68,7 @@ func GetStockItemReport(res http.ResponseWriter, req *http.Request) {
     }
     if len(reqBody.SearchText) > 0 {
         var searchField = getItemFieldBySearchKey(reqBody.SearchKey)
-        filter["$or"] = utils.GenerateSearchFilter(reqBody.SearchText, searchField)
+        filter["$and"] = utils.GenerateSearchFilter(reqBody.SearchText, searchField)
     }
     docFilter := handlers.DocumentFilter {
         Ctx: context.TODO(),
