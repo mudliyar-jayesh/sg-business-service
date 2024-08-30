@@ -208,7 +208,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
     var dueDays int32
     var overDueDays int32
 
-    if len(results.Data) > 0 {
+    if len(settings.Data) > 0 {
         dueDays = settings.Data[0]["DueDays"].(int32)
         overDueDays= settings.Data[0]["OverDueDays"].(int32)
     }
