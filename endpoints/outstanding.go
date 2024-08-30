@@ -162,10 +162,15 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         filter["$and"] = utils.GenerateSearchFilter(reqBody.SearchText, searchField)
     }
 
+    var usePagination = reqBody.Limit != 0
+    if reqBody.ReportOnType == PartyWise {
+        usePagination = false
+    }
+
     docFilter := handlers.DocumentFilter {
         Ctx: context.TODO(),
         Filter:filter,
-        UsePagination: reqBody.Limit != 0,
+        UsePagination: usePagination,
         Limit: reqBody.Limit,
         Offset: reqBody.Offset,
         Projection: bson.M{
@@ -299,7 +304,24 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
 
             partyBills = append(partyBills, partyBill)
         }
-        response := utils.NewResponseStruct(partyBills, len(partyBills))
+
+
+        // Skip the first 8 records
+        skip := reqBody.Offset * reqBody.Limit
+        length := int64(len(partyBills))
+        if skip > length {
+            skip = 0
+        }
+        skipped := partyBills[skip:]
+
+        // Take the next 5 records
+        take := skip + reqBody.Limit
+        if take > length {
+            take = length
+        }
+        takenBills := skipped[:take]
+
+        response := utils.NewResponseStruct(takenBills, len(takenBills))
         response.ToJson(res)
         return 
     }
