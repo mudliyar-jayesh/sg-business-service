@@ -35,6 +35,8 @@ func main() {
 
     http.Handle("/os/send-email", corsMiddleware(http.HandlerFunc(endpoints.SendEmail)))
 
+    http.Handle("/os/aggr", corsMiddleware(http.HandlerFunc(endpoints.TempOS)))
+
     // outstanding settings endpoints 
     http.Handle("/os-setting/create", corsMiddleware(http.HandlerFunc(endpoints.CreateOsSetting)))
     http.Handle("/os-setting/update", corsMiddleware(http.HandlerFunc(endpoints.UpdateOsSetting)))

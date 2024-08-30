@@ -145,3 +145,31 @@ func (handler *MongoHandler) UpdateDocument(dbName string, collectionName string
     }
 }
 
+func (handler* MongoHandler) AggregatePipeline(dbName string, collectionName string, pipeline mongo.Pipeline) []bson.M {
+    // Select the database and collection
+    collection := Client.Database(dbName).Collection(collectionName)
+    ctx := context.TODO()
+
+    // Execute the aggregation
+    cursor, err := collection.Aggregate(ctx, pipeline)
+
+    if err != nil {
+        fmt.Println(err)
+    }
+    defer cursor.Close(ctx)
+
+    var results []bson.M
+
+    for cursor.Next(ctx) {
+        var elem bson.M
+        if err := cursor.Decode(&elem); err == nil {
+            results = append(results, elem)
+        }
+    }
+
+    if err := cursor.Err(); err != nil {
+        fmt.Println(err)
+    }
+    return results
+}
+

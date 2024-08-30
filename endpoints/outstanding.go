@@ -5,6 +5,7 @@ import (
     "context"
     "net/http"
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/bson/primitive"
     "sg-business-service/handlers"
     "sg-business-service/utils"
@@ -312,6 +313,50 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
     response := utils.NewResponseStruct(bills, len(bills))
     response.ToJson(res)
 }
+
+
+func TempOS(res http.ResponseWriter, req *http.Request) {
+    var collection = handlers.GetCollection("NewTallyDesktopSync", "Bills")
+    var mongoHandler = handlers.NewMongoHandler(collection)
+    companyId := req.Header.Get("CompanyId")
+
+    pipeline := mongo.Pipeline{
+        {  {"$match", bson.D{
+            {"VoucherId", bson.M {
+                "$regex": "^"+ companyId,
+            }},
+        }}},
+        {{"$lookup", bson.D{
+            {"from", "Vouchers"},
+            {"localField", "VoucherId"},
+            {"foreignField", "GUID"},
+            {"as", "voucher_info"},
+        }}},
+        {{"$unwind", "$voucher_info"}},
+        {
+            {
+                "$project", bson.D {
+                    {"BillName", 1 },
+                    {"SalesPerson", 1 },
+                    {"BrokerName", 1 },
+                    {"TotalBrokerCommission", 1 },
+                    {"TotalSalesIncentive", 1 },
+                    {"Ledger", bson.D{
+                        {"Name", bson.D{
+                            {"$arrayElemAt", bson.A{"$voucher_info.Ledgers.LedgerName", 0}},
+                        }},
+                        {"Amount", bson.D{
+                            {"$arrayElemAt", bson.A{"$voucher_info.Ledgers.Amount.Amount", 0}},
+                        }},
+                    }},
+                }}},
+            }
+
+    results := mongoHandler.AggregatePipeline("NewTallyDesktopSync", "VoucherUserTypeDetails", pipeline)
+    response := utils.NewResponseStruct(results, len(results))
+    response.ToJson(res)
+}
+
 func parseFloat64(value interface{}) float64 {
     var result float64
     switch v := value.(type) {
