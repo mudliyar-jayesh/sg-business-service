@@ -13,7 +13,12 @@ import (
 
 
 type DueDayFilter int
+type ReportType int
 
+const (
+    PartyWise ReportType = iota
+    BillWise
+)
 const (
     AllBills DueDayFilter = iota
     PendingBills
@@ -31,8 +36,9 @@ type OsReportFilter struct {
     DueDays int
     OverDueDays int
     SearchKey string
-    SortKey string;
-    SortOrder string;
+    SortKey string
+    SortOrder string
+    ReportOnType ReportType
 }
 
 func getFieldBySortKey(sortKey string) string {
@@ -263,7 +269,45 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         bills = append(bills, bill)
     }
 
-    //var groupedBills = utils.GroupByKey[Bill](bills, "LedgerName")
+    if reqBody.ReportOnType == PartyWise {
+        var groupedBills = utils.GroupByKey(bills, "LedgerName")
+
+        var partyBills []Bill
+        for _, group := range groupedBills {
+            if len(group) < 1 {
+                continue;
+            }
+
+            var firstEntry = group[0]
+
+            var totalAmount float64 = 0
+            var totalDue float64 = 0
+            var totalOverDue float64 = 0
+
+            for _, bill := range group {
+                totalAmount += bill.Amount
+                totalDue += bill.DueAmount
+                totalOverDue += bill.OverDueAmount
+            }
+
+            var partyBill Bill = Bill {
+                LedgerName: firstEntry.LedgerName,
+                LedgerGroupName: firstEntry.LedgerGroupName,
+                BillName: "",
+                DueDate: "",
+                BillDate: "",
+                DelayDays: 0,
+                Amount:totalAmount,
+                DueAmount: totalDue,
+                OverDueAmount: totalOverDue,
+            }
+
+            partyBills = append(partyBills, partyBill)
+        }
+        response := utils.NewResponseStruct(partyBills, len(partyBills))
+        response.ToJson(res)
+        return 
+    }
 
     response := utils.NewResponseStruct(bills, len(bills))
     response.ToJson(res)
