@@ -211,11 +211,9 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         return;
     }
 
-    var dueDays int32
     var overDueDays int32
 
     if len(settings.Data) > 0 {
-        dueDays = settings.Data[0]["DueDays"].(int32)
         overDueDays= settings.Data[0]["OverDueDays"].(int32)
     }
     var bills []Bill
@@ -252,7 +250,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         }
         var amount = parseFloat64(item["Amount"])
         var dueFilter = AllBills
-        if days >= dueDays && days <= overDueDays {
+        if days > 0 && days <= overDueDays {
             bill.DueAmount = amount
             dueFilter = DueBills
         } else if days > overDueDays {
