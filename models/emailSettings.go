@@ -13,8 +13,9 @@ func (r EmailBodyType) String() string {
 }
 
 type EmailSettings struct {
-    SmtpServer string 
-    SmtpPort string
+    SmtpServer string `bson:"SmtpServer"`
+    SmtpPort string `bson:"SmtpPort"`
+    From string `bson:"From"`
     To []string `bson:"To"`
     Cc []string `bson:"Cc"`
     Bcc []string `bson:"Bcc"`
