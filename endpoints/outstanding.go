@@ -313,7 +313,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         skipped := partyBills[skip:]
 
         // Take the next 5 records
-        take := skip + reqBody.Limit
+        take := reqBody.Limit
         if take > length {
             take = length
         }
@@ -374,70 +374,6 @@ func TempOS(res http.ResponseWriter, req *http.Request) {
 
     billResults := mongoHandler.AggregatePipeline("NewTallyDesktopSync", "VoucherUserTypeDetails", billPipeLine)
 
-            /*
-        {{"$lookup", bson.D{
-            {"from", "Bills"},
-            {"localField", "VoucherNumber"},
-            {"foreignField", "Name"},
-            {"as", "voucher_info"},
-        }}},
-        {{"$unwind", "$voucher_info"}},
-        {{
-            "$project", bson.D {
-                {"_id", 0},
-                {"GUID",1 },
-                {"VoucherType", 1 },
-                {"VoucherNumber", 1 },
-                {"voucherDetails", 1 },
-                {"voucher_info", 1 },
-            }}},
-            */
-    /*
-    pipeline := mongo.Pipeline{
-        {  {"$match", bson.D{
-            {"VoucherId", bson.M {
-                "$regex": "^"+ companyId,
-            }},
-        }}},
-
-        // Join with Vouchers
-        {{"$lookup", bson.D{
-            {"from", "Vouchers"},
-            {"localField", "VoucherId"},
-            {"foreignField", "GUID"},
-            {"as", "voucher_info"},
-        }}},
-        {{"$unwind", "$voucher_info"}},
-        
-        // Join with Outstanding
-        {{"$lookup", bson.D{
-            {"from", "Bills"},
-            {"localField", "voucher_info.VoucherNumber"},
-            {"foreignField", "Name"},
-            {"as", "bill_info"},
-        }}},
-        {{"$unwind", "$voucher_info"}},
-        {
-            {
-                "$project", bson.D {
-                    {"BillName", 1 },
-                    {"SalesPerson", 1 },
-                    {"BrokerName", 1 },
-                    {"TotalBrokerCommission", 1 },
-                    {"TotalSalesIncentive", 1 },
-                    {"BillInfo", "$bill_info"},
-                    {"Ledger", bson.D{
-                        {"Name", bson.D{
-                            {"$arrayElemAt", bson.A{"$voucher_info.Ledgers.LedgerName", 0}},
-                        }},
-                        {"Amount", bson.D{
-                            {"$arrayElemAt", bson.A{"$voucher_info.Ledgers.Amount.Amount", 0}},
-                        }},
-                    }},
-                }}},
-            }
-
-            */
     response := utils.NewResponseStruct(billResults, len(billResults))
     response.ToJson(res)
 }
