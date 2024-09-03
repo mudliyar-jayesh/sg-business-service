@@ -9,62 +9,10 @@ import (
     "sg-business-service/handlers"
     "sg-business-service/utils"
     "strconv"
+    osMod "sg-business-service/modules/outstanding"
+    osSettingMod "sg-business-service/modules/outstanding/settings"
+
 )
-
-
-type DueDayFilter int
-type ReportType int
-
-const (
-    PartyWise ReportType = iota
-    BillWise
-)
-const (
-    AllBills DueDayFilter = iota
-    PendingBills
-    DueBills
-    OverDueBills
-)
-
-type OsReportFilter struct {
-    PartyName string
-    SearchText string
-    Limit int64
-    Offset int64
-    Groups []string
-    DueFilter DueDayFilter
-    DueDays int
-    OverDueDays int
-    SearchKey string
-    SortKey string
-    SortOrder string
-    ReportOnType ReportType
-}
-
-func getFieldBySortKey(sortKey string) string {
-    var fieldBySortKey = make(map[string]string)
-    fieldBySortKey["Party"] = "LedgerName"
-    fieldBySortKey["Group"] = "LedgerGroupName"
-    fieldBySortKey["Bill"] = "Name"
-
-    sortField, exists := fieldBySortKey[sortKey]
-    if exists {
-        return sortField
-    }
-    return fieldBySortKey["Party"]
-}
-func getFieldBySearchKey(searchKey string) string {
-    var fieldBySearchKey = make(map[string]string)
-    fieldBySearchKey["Party"] = "LedgerName"
-    fieldBySearchKey["Group"] = "LedgerGroupName"
-    fieldBySearchKey["Bill"] = "Name"
-
-    searchField, exists := fieldBySearchKey[searchKey]
-    if exists {
-        return searchField
-    }
-    return fieldBySearchKey["Party"]
-}
 
 func SearchLedgers(res http.ResponseWriter, req *http.Request) {
     companyId := req.Header.Get("CompanyId")
@@ -122,10 +70,6 @@ func GetCachedGroups(res http.ResponseWriter, req *http.Request) {
 
 
 func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
-    var collection = handlers.GetCollection("NewTallyDesktopSync", "Bills")
-    var mongoHandler = handlers.NewMongoHandler(collection)
-
-
     companyId := req.Header.Get("CompanyId")
     isDebit := utils.GetBoolFromQuery(req, "isDebit")
 
@@ -136,7 +80,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
 
     var groups = handlers.CachedGroups.GetChildrenNames(companyId, parentName)
 
-    reqBody, err := utils.ReadRequestBody[OsReportFilter](req)
+    reqBody, err := utils.ReadRequestBody[osMod.OsReportFilter](req)
     if err != nil {
         http.Error(res, "Unable to read request body", http.StatusBadRequest)
         return
@@ -158,54 +102,18 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
     if len(reqBody.PartyName) > 0 {
         filter["LedgerName"] = reqBody.PartyName
     } else if len(reqBody.SearchText) > 0 {
-        var searchField = getFieldBySearchKey(reqBody.SearchKey)
+        var searchField = osMod.GetFieldBySearchKey(reqBody.SearchKey)
         filter["$and"] = utils.GenerateSearchFilter(reqBody.SearchText, searchField)
     }
 
     var usePagination = reqBody.Limit != 0
-    if reqBody.ReportOnType == PartyWise {
+    if reqBody.ReportOnType == osMod.PartyWise {
         usePagination = false
     }
 
-    docFilter := handlers.DocumentFilter {
-        Ctx: context.TODO(),
-        Filter:filter,
-        UsePagination: usePagination,
-        Limit: reqBody.Limit,
-        Offset: reqBody.Offset,
-        Projection: bson.M{
-            "LedgerName": 1,
-            "LedgerGroupName": 1,
-            "BillDate": "$BillDate.Date",
-            "DueDate": "$BillCreditPeriod.DueDate",
-            "Amount": "$ClosingBal.Amount",
-            "Name": "$Name",
-            "_id": 0,
-        },
-        Sorting: bson.D {
-            {
-                Key: getFieldBySortKey(reqBody.SortKey),
-                Value: utils.GetValueBySortOrder(reqBody.SortOrder),
-            },
-        },
-    }
+    var results handlers.DocumentResponse= osMod.GetOutstandingByFilter(filter, *reqBody, usePagination)
 
-    var results handlers.DocumentResponse= mongoHandler.FindDocuments(docFilter)
-
-    settingCollection := handlers.GetCollection("BMRM", "OutstandingSettings")
-    var settingsHandler = handlers.NewMongoHandler(settingCollection)
-
-    docFilter = handlers.DocumentFilter {
-        Ctx: context.TODO(),
-        Filter: bson.M {
-            "CompanyId": companyId,
-        },
-        UsePagination: false,
-        Limit: 0,
-        Offset: 0,
-    }
-
-    settings := settingsHandler.FindDocuments(docFilter)
+    settings := osSettingMod.GetAllSettings(companyId)
     if settings.Err != nil {
         http.Error(res, "No Data", http.StatusBadRequest)
         return;
@@ -216,7 +124,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
     if len(settings.Data) > 0 {
         overDueDays= settings.Data[0]["OverDueDays"].(int32)
     }
-    var bills []Bill
+    var bills []osMod.Bill
     istLocation, _ := time.LoadLocation("Asia/Kolkata")
     for _, item := range results.Data {
         billDateValue := item["BillDate"].(primitive.DateTime).Time()
@@ -240,7 +148,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         // Get the difference in days
         days := int32(diff.Hours() / 24)
 
-        var bill Bill = Bill {
+        var bill osMod.Bill = osMod.Bill {
             LedgerName: item["LedgerName"].(string),
             LedgerGroupName: item["LedgerGroupName"].(string),
             BillName: item["Name"].(string),
@@ -249,28 +157,28 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
             DelayDays: days,
         }
         var amount = parseFloat64(item["Amount"])
-        var dueFilter = AllBills
+        var dueFilter = osMod.AllBills
         if days > 0 && days <= overDueDays {
             bill.DueAmount = amount
-            dueFilter = DueBills
+            dueFilter =  osMod.DueBills
         } else if days > overDueDays {
             bill.OverDueAmount = amount
-            dueFilter = OverDueBills
+            dueFilter = osMod.OverDueBills
         } else {
             bill.Amount = amount
-            dueFilter = PendingBills
+            dueFilter = osMod.PendingBills
         }
 
-        if reqBody.DueFilter != AllBills && reqBody.DueFilter != dueFilter{
+        if reqBody.DueFilter != osMod.AllBills && reqBody.DueFilter != dueFilter{
             continue
         }
         bills = append(bills, bill)
     }
 
-    if reqBody.ReportOnType == PartyWise {
+    if reqBody.ReportOnType == osMod.PartyWise {
         var groupedBills = utils.GroupByKey(bills, "LedgerName")
 
-        var partyBills []Bill
+        var partyBills []osMod.Bill
         for _, group := range groupedBills {
             if len(group) < 1 {
                 continue;
@@ -288,7 +196,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
                 totalOverDue += bill.OverDueAmount
             }
 
-            var partyBill Bill = Bill {
+            var partyBill osMod.Bill = osMod.Bill {
                 LedgerName: firstEntry.LedgerName,
                 LedgerGroupName: firstEntry.LedgerGroupName,
                 BillName: "",
@@ -397,18 +305,3 @@ func parseFloat64(value interface{}) float64 {
     return result
 }
 
-type Temp struct {
-    Data interface{}
-    Count int
-}
-type Bill struct {
-    LedgerName string 
-    LedgerGroupName string 
-    BillName string
-    BillDate string
-    DueDate string
-    DelayDays int32
-    Amount float64
-    DueAmount float64
-    OverDueAmount float64
-}
