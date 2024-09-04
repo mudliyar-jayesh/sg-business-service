@@ -77,8 +77,13 @@
 <body>
     <div class="container">
         <h1>Outstanding Balance Notification</h1>
-        <p>Dear client,</p>
-        <p>This is a reminder that you have an outstanding balance with us. Please review the details below:</p>
+        <p>To {{.PartyName}},</p>
+        <p>Address: {{.Address}}</p>
+        <p>This is a reminder that you have an outstanding balance  with us. Please review the details below:</p>
+
+        <p>Total Outstanding
+        <span class="amount"></span>
+        </p>
 
         <div class="table-container">
             <table>
@@ -92,13 +97,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {{range .}}
+                    {{range .Bills}}
                     <tr>
                         <td>{{.BillName}}</td>
-                        <td>{{.Amount}}</td>
-                        <td>{{.DelayDays}}</td>
-                        <td>{{.BillDate}}</td>
-                        <td>{{.DueDate}}</td>
+                        <td class="amount">{{.Amount}}</td>
+                        <td class="amount">{{.DelayDays}}</td>
+                        <td class="date">{{.BillDate}}</td>
+                        <td class="date">{{.DueDate}}</td>
                     </tr>
                     {{end}}
                 </tbody>
@@ -115,6 +120,36 @@
             <p><a href="https://softgensolution.in">Visit our website</a></p>
         </div>
     </div>
-</body>
+
+    <script>
+        // Function to format a date string to dd-MM-yyyy
+        function formatDate(dateStr) {
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const date = new Date(dateStr);
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            const month = months[date.getUTCMonth()];
+            const year = date.getUTCFullYear();
+            return `${day}-${month}-${year}`;
+        }
+
+        // Apply date formatting to all elements with the class 'date'
+        document.querySelectorAll('.date').forEach(function(element) {
+            var dateStr = element.textContent;
+            element.textContent = formatDate(dateStr);
+        });
+
+        // Function to format a number as currency in INR
+        function formatCurrency(amount) {
+            return '₹' + amount.toString().replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+        }
+
+        // Apply formatting to all elements with the class 'amount'
+        document.querySelectorAll('.amount').forEach(function(element) {
+            var amount = parseFloat(element.textContent.replace(/₹|,/g, ''));
+            if (!isNaN(amount)) {
+                element.textContent = formatCurrency(amount);
+            }
+        });
+    </script></body>
 </html>
 

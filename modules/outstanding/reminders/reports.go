@@ -24,7 +24,7 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
     //setting := configMod.GetAllSettings(companyId).Data
 
 
-    for key, _ := range ledgerByName {
+    for key, ledger := range ledgerByName {
         collectionFilter := bson.M {
             "CompanyId": companyId,
             "LedgerName": key,
@@ -49,6 +49,7 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
             continue
         }
         var bills []osMod.Bill
+        var totalAmount float64 = 0
         istLocation, _ := time.LoadLocation("Asia/Kolkata")
         for _, item := range billResponse.Data {
             billDateValue := item["BillDate"].(primitive.DateTime).Time()
@@ -82,18 +83,20 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
             }
             var amount = utils.ParseFloat64(item["Amount"])
             bill.Amount = amount
+            totalAmount += amount
             bills = append(bills, bill)
         }
 
-        fmt.Println("count of bills for party, %v", len(bills))
+        fmt.Printf("Some Address value: %v", ledger)
 
-        // html body
-        /*emailBody, convErr := utils.GenerateHTMLTable(bills)
-        if convErr != nil {
-            return
-        } */
+        content := ReminderBody {
+            PartyName : key,
+            Address: "",
+            TotalAmount: totalAmount,
+            Bills: bills,
+        }
+        emailBody := handlers.WriteToTemplate("/home/jayesh/development/research/templateWriter/osTemplate.html", content)
 
-        emailBody := handlers.WriteToTemplate("/home/jayesh/development/research/templateWriter/osTemplate.html", bills)
 
         // create email
         to := make([]string, 1)

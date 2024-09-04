@@ -22,6 +22,7 @@ func GetLedgerByNames(companyId string, ledgerNames []string) []bson.M {
         Projection: bson.M {
             "Name": 1,
             "Group": 1,
+            "Address": 1,
             "MailingName": 1,
             "Email": 1,
             "Emailcc": 1,
