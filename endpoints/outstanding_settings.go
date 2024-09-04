@@ -8,6 +8,7 @@ import (
     "sg-business-service/handlers"
     "sg-business-service/utils"
     "sg-business-service/models"
+    "sg-business-service/modules/outstanding/reminders"
 )
 
 
@@ -129,3 +130,12 @@ func SendEmail(res http.ResponseWriter, req *http.Request) {
     }
 }
 
+func SendLedgerEmail(res http.ResponseWriter, req *http.Request) {
+    companyId := req.Header.Get("CompanyId")
+    partyName := req.URL.Query().Get("partyName")
+
+    parties := make([]string, 1)
+    parties[0] = partyName
+
+    reminders.SendEmailReminder(companyId, parties)
+}

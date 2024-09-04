@@ -2,7 +2,23 @@ package config
 
 import (
     "os"
+
 )
+
+const (
+    AppDb string = "BMRM"
+    TallyDb string = "NewTallyDesktopSync"
+)
+
+const (
+    Bill string = "Bills"
+    Ledger string = "Ledgers"
+    LedgerGroup string = "Groups"
+    Voucher string = "Vouchers"
+    Item string = "StockItems"
+    ItemGroup string = "StockGroups"
+)
+
 
 type MongoConfig struct {
     Uri string

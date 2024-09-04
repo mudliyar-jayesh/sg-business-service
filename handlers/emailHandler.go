@@ -23,6 +23,8 @@ func SendEmail(config models.EmailSettings) error {
     if len(config.Cc) > 0 {
         headers["Cc"] = strings.Join(config.Cc, ", ")
     }
+    headers["MIME-Version"] = "1.0"
+    headers["Content-Type"] = "text/html; charset=\"UTF-8\""
 
     headers["Subject"] = config.Subject
 

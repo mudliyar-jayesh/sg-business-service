@@ -1,7 +1,9 @@
 package utils
 
 import (
+    "strconv"
     "fmt"
+    "errors"
     "reflect"
     "go.mongodb.org/mongo-driver/bson"
 )
@@ -78,3 +80,37 @@ func Intersection(slice1, slice2 []string) []string {
 
 	return result
 }
+
+func ToDictionary(bsonSlice []bson.M, keyField string) (map[string]interface{}, error) {
+    dict := make(map[string]interface{})
+
+    for _, item := range bsonSlice {
+        key, ok := item[keyField].(string)
+        if !ok {
+            return nil, errors.New("invalid key string")
+        }
+        dict[key] = item
+    }
+    return dict, nil
+}
+
+
+func ParseFloat64(value interface{}) float64 {
+    var result float64
+    switch v := value.(type) {
+    case float64:
+        result = v
+    case int:
+        result = float64(v)
+    case string:
+        parsed, err := strconv.ParseFloat(v, 64)
+        if err != nil {
+            return 0 // Return default value on error
+        }
+        result = parsed
+    default:
+        return 0 // Return default value if type is not handled
+    }
+    return result
+}
+

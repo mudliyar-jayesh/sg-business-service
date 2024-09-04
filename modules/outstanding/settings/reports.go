@@ -19,3 +19,5 @@ func GetAllSettings(companyId string) handlers.DocumentResponse {
     var handler = GetSettingsCollection()
     return handler.FindDocuments(docFilter)
 }
+
+

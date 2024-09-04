@@ -4,6 +4,7 @@ import (
     "sg-business-service/handlers"
     "go.mongodb.org/mongo-driver/bson"
     "sg-business-service/utils"
+    "sg-business-service/config"
 )
 
 func getFieldBySortKey(sortKey string) string {
@@ -31,8 +32,8 @@ func GetFieldBySearchKey(searchKey string) string {
     return fieldBySearchKey["Party"]
 }
 
-func getOutstandingCollection() *handlers.MongoHandler {
-    var collection = handlers.GetCollection("NewTallyDesktopSync", "Bills")
+func GetOutstandingCollection() *handlers.MongoHandler {
+    var collection = handlers.GetCollection(config.TallyDb, config.Bill)
     return handlers.NewMongoHandler(collection)
 }
 
@@ -60,7 +61,7 @@ func GetOutstandingByFilter(mongoFilter bson.M, requestFilter OsReportFilter, us
         },
     }
 
-    var handler  = getOutstandingCollection()
+    var handler  = GetOutstandingCollection()
     return handler.FindDocuments(docFilter)
 }
 
