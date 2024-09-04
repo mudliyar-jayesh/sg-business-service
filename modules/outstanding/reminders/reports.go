@@ -88,16 +88,21 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
         fmt.Println("count of bills for party, %v", len(bills))
 
         // html body
-        emailBody, convErr := utils.GenerateHTMLTable(bills)
+        /*emailBody, convErr := utils.GenerateHTMLTable(bills)
         if convErr != nil {
             return
-        }
+        } */
+
+        emailBody := handlers.WriteToTemplate("/home/jayesh/development/research/templateWriter/osTemplate.html", bills)
 
         // create email
         to := make([]string, 1)
         to[0] = "softgen.aquib.shaikh@gmail.com"
-        cc := make([]string, 1)
-        cc[0] = "jayeshmudlyiar2112000@gmail.com"
+
+        cc := make([]string, 3)
+        cc[0] = "rajeshri@4qs.in"
+        cc[1] = "softgen.mustafa.khan@gmail.com"
+        cc[2] = "softgen.saish.jagtap@gmail.com"
 
         var emailSettings = models.EmailSettings {
             To: to,

@@ -1,6 +1,8 @@
 package handlers
 
 import (
+    "bytes"
+    "html/template"
     "net/smtp"
     "strings"
     "sg-business-service/models"
@@ -45,5 +47,22 @@ func SendEmail(config models.EmailSettings) error {
         return err
     }
     return nil
+
+}
+
+func WriteToTemplate(templatePath string, data interface{}) string {
+
+    pageFormat, err := template.ParseFiles(templatePath)
+    if err != nil {
+        fmt.Println("Could not parse template")
+    }
+
+    var buf bytes.Buffer
+    err = pageFormat.Execute(&buf, data)
+    if err != nil {
+        fmt.Println("Could not write template")
+    }
+
+    return buf.String()
 
 }
