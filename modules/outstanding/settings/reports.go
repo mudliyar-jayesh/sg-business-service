@@ -3,9 +3,10 @@ import (
     "context"
     "sg-business-service/handlers"
     "go.mongodb.org/mongo-driver/bson"
+    "sg-business-service/models"
 )
 
-func GetAllSettings(companyId string) handlers.DocumentResponse {
+func GetAllSettings(companyId string) ([]models.OsShareSettings, error) {
     docFilter  := handlers.DocumentFilter {
         Ctx: context.TODO(),
         Filter: bson.M {
@@ -17,7 +18,7 @@ func GetAllSettings(companyId string) handlers.DocumentResponse {
     }
 
     var handler = GetSettingsCollection()
-    return handler.FindDocuments(docFilter)
+    return handlers.GetDocuments[models.OsShareSettings](handler, docFilter)
 }
 
 

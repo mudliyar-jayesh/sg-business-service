@@ -113,17 +113,14 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
 
     var results handlers.DocumentResponse= osMod.GetOutstandingByFilter(filter, *reqBody, usePagination)
 
-    settings := osSettingMod.GetAllSettings(companyId)
-    if settings.Err != nil {
+    settings, settingsErr := osSettingMod.GetAllSettings(companyId)
+    if settingsErr != nil {
         http.Error(res, "No Data", http.StatusBadRequest)
         return;
     }
 
-    var overDueDays int32
+    setting := settings[0]
 
-    if len(settings.Data) > 0 {
-        overDueDays= settings.Data[0]["OverDueDays"].(int32)
-    }
     var bills []osMod.Bill
     istLocation, _ := time.LoadLocation("Asia/Kolkata")
     for _, item := range results.Data {
@@ -158,10 +155,10 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
         }
         var amount = parseFloat64(item["Amount"])
         var dueFilter = osMod.AllBills
-        if days > 0 && days <= overDueDays {
+        if days > 0 && days <= int32(setting.OverDueDays) {
             bill.DueAmount = amount
             dueFilter =  osMod.DueBills
-        } else if days > overDueDays {
+        } else if days > int32(setting.OverDueDays) {
             bill.OverDueAmount = amount
             dueFilter = osMod.OverDueBills
         } else {

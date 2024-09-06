@@ -117,6 +117,41 @@ func (handler *MongoHandler) FindDocuments(docFilter DocumentFilter) DocumentRes
     }
 }
 
+func GetDocuments[T any](handler *MongoHandler, docFilter DocumentFilter) ([]T, error) {
+    findOptions := options.Find()
+    if docFilter.UsePagination {
+        findOptions.SetSkip(docFilter.Offset * docFilter.Limit)
+        findOptions.SetLimit(docFilter.Limit)
+    }
+
+    if docFilter.Projection != nil {
+        findOptions.SetProjection(docFilter.Projection)
+    }
+    if docFilter.Sorting != nil {
+        findOptions.SetSort(docFilter.Sorting)
+    }
+    cursor, err := handler.collection.Find(docFilter.Ctx, docFilter.Filter, findOptions)
+    if err != nil {
+        return nil, err
+    }
+
+    defer cursor.Close(docFilter.Ctx)
+
+    var results []T
+
+    for cursor.Next(docFilter.Ctx) {
+        var elem T
+        if err := cursor.Decode(&elem); err == nil {
+            results = append(results, elem)
+        }
+    }
+
+    if err := cursor.Err(); err != nil {
+        return results, err
+    }
+    return results, err
+}
+
 
 func InsertDocument[T any](dbName string, collName string, document T) (primitive.ObjectID, error) {
     // Select the database and collection

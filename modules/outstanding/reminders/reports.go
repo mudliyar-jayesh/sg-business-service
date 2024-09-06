@@ -9,7 +9,7 @@ import (
     "go.mongodb.org/mongo-driver/bson/primitive"
     "sg-business-service/utils"
     osMod "sg-business-service/modules/outstanding"
-    //configMod "sg-business-service/modules/outstanding/settings"
+    configMod "sg-business-service/modules/outstanding/settings"
     ledgersMod "sg-business-service/modules/ledgers"
     "sg-business-service/models"
 )
@@ -21,10 +21,14 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
         return
     }
 
-    //setting := configMod.GetAllSettings(companyId).Data
+    settingData, settingErr := configMod.GetAllSettings(companyId)
+    if settingData == nil || len(settingData) > 1 {
+        fmt.Println(settingErr)
+        return
+    }
+    setting := settingData[0]
 
-
-    for key, ledger := range ledgerByName {
+    for key, _ := range ledgerByName {
         collectionFilter := bson.M {
             "CompanyId": companyId,
             "LedgerName": key,
@@ -40,6 +44,7 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
                 "BillDate": "$BillDate.Date",
                 "DueDate": "$BillCreditPeriod.DueDate",
                 "Amount": "$ClosingBal.Amount",
+                "OpeningAmount": "$OpeningBal.Amount",
                 "Name": "$Name",
                 "_id": 0,
             },
@@ -87,7 +92,6 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
             bills = append(bills, bill)
         }
 
-        fmt.Printf("Some Address value: %v", ledger)
 
         content := ReminderBody {
             PartyName : key,
@@ -96,27 +100,46 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
             Bills: bills,
         }
         emailBody := handlers.WriteToTemplate("/home/jayesh/development/research/templateWriter/osTemplate.html", content)
+        handlers.WriteToTemplate("/home/jayesh/development/research/templateWriter/osTemplate.html", content)
+        emailSetting := setting.EmailSetting
 
 
-        // create email
-        to := make([]string, 1)
-        to[0] = "softgen.aquib.shaikh@gmail.com"
+        /*
+        for _, item := range emailSetting["To"].(primitive.A) {
+         var to []string
+             // Assert each item to string
+             str, ok := item.(string)
+             if !ok {
+                 fmt.Printf("Item %v is not of type string\n", item)
+                 continue
+             }
+             to = append(to, str)
+         } 
 
-        cc := make([]string, 3)
-        cc[0] = "rajeshri@4qs.in"
-        cc[1] = "softgen.mustafa.khan@gmail.com"
-        cc[2] = "softgen.saish.jagtap@gmail.com"
+
+         var cc []string
+         for _, item := range emailSetting["Cc"].(primitive.A) {
+             // Assert each item to string
+             str, ok := item.(string)
+             if !ok {
+                 fmt.Printf("Item %v is not of type string\n", item)
+                 continue
+             }
+             cc = append(cc, str)
+         }
+         */
 
         var emailSettings = models.EmailSettings {
-            To: to,
-            Cc: cc,
-            SmtpPort:"587",
-            SmtpServer: "smtp.gmail.com",
-            Subject: "Sample Email",
-            Body: "Here is a sample email" + emailBody,
+            To: emailSetting.To,
+            Cc: emailSetting.Cc,
+            SmtpPort: emailSetting.SmtpPort,
+            SmtpServer: emailSetting.SmtpServer,
+            Subject: emailSetting.Subject,
+            Body: emailSetting.Body + emailBody,
             BodyType: 1,
         }
 
+        fmt.Printf("settings: \n",emailSettings.To)
         // send email 
         err := handlers.SendEmail(emailSettings)
         if err != nil  {
