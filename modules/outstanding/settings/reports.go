@@ -1,12 +1,14 @@
 package settings
+
 import (
-    "context"
-    "sg-business-service/handlers"
-    "go.mongodb.org/mongo-driver/bson"
-    "sg-business-service/models"
+	"context"
+	"sg-business-service/handlers"
+	"sg-business-service/modules/outstanding"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
-func GetAllSettings(companyId string) ([]models.OsShareSettings, error) {
+func GetAllSettings(companyId string) ([]outstanding.OsShareSettings, error) {
     docFilter  := handlers.DocumentFilter {
         Ctx: context.TODO(),
         Filter: bson.M {
@@ -18,7 +20,7 @@ func GetAllSettings(companyId string) ([]models.OsShareSettings, error) {
     }
 
     var handler = GetSettingsCollection()
-    return handlers.GetDocuments[models.OsShareSettings](handler, docFilter)
+    return handlers.GetDocuments[outstanding.OsShareSettings](handler, docFilter)
 }
 
 

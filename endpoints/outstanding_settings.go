@@ -1,14 +1,16 @@
 package endpoints
 
 import (
-    "fmt"
-    "context"
-    "net/http"
-    "go.mongodb.org/mongo-driver/bson"
-    "sg-business-service/handlers"
-    "sg-business-service/utils"
-    "sg-business-service/models"
-    "sg-business-service/modules/outstanding/reminders"
+	"context"
+	"fmt"
+	"net/http"
+	"sg-business-service/handlers"
+	"sg-business-service/models"
+	"sg-business-service/modules/outstanding"
+	"sg-business-service/modules/outstanding/reminders"
+	"sg-business-service/utils"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 
@@ -18,7 +20,7 @@ func CreateOsSetting(res http.ResponseWriter, req *http.Request) {
 
     companyId := req.Header.Get("CompanyId")
 
-    body, err := utils.ReadRequestBody[models.OsShareSettings](req)
+    body, err := utils.ReadRequestBody[outstanding.OsShareSettings](req)
     if err != nil {
         http.Error(res, "Unable to read request body", http.StatusBadRequest)
         return
@@ -57,7 +59,7 @@ func UpdateOsSetting(res http.ResponseWriter, req *http.Request) {
 
     companyId := req.Header.Get("CompanyId")
 
-    body, err := utils.ReadRequestBody[models.OsShareSettings](req)
+    body, err := utils.ReadRequestBody[outstanding.OsShareSettings](req)
     if err != nil {
         http.Error(res, "Unable to read request body", http.StatusBadRequest)
         return
@@ -132,10 +134,12 @@ func SendEmail(res http.ResponseWriter, req *http.Request) {
 
 func SendLedgerEmail(res http.ResponseWriter, req *http.Request) {
     companyId := req.Header.Get("CompanyId")
-    partyName := req.URL.Query().Get("partyName")
 
-    parties := make([]string, 1)
-    parties[0] = partyName
+    parties, err := utils.ReadRequestBody[[]string](req)
 
-    reminders.SendEmailReminder(companyId, parties)
+    if (err != nil) {
+        fmt.Println("Error parsing the list of ledgerNames")
+    }
+
+    reminders.SendEmailReminder(companyId, *parties)
 }
