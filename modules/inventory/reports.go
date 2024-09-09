@@ -48,7 +48,7 @@ func GetItemGroups(companyId string, pagination models.Pagination, mongoFilter b
     }
     docFilter := handlers.DocumentFilter {
         Ctx: context.TODO(),
-        Filter:mongoFilter,
+        Filter:filter,
         UsePagination: pagination.Apply,
         Limit: pagination.Limit,
         Offset: pagination.Offset,
