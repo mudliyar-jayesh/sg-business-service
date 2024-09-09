@@ -31,9 +31,27 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
     setting := settingData[0]
 
     for key, _ := range ledgerByName {
+
         collectionFilter := bson.M {
             "CompanyId": companyId,
             "LedgerName": key,
+        }
+
+        // if cutoff date is not present then apply billDate filter.
+        if len(setting.CutOffDate) > 0 {
+            parsedDate, err := time.Parse("2006-01-02", setting.CutOffDate)
+
+            if err != nil {
+                fmt.Println("Error occoured while parsing date", setting.CutOffDate)
+            }
+
+            collectionFilter = bson.M {
+            "CompanyId": companyId,
+            "LedgerName": key,
+            "BillDate.Date": bson.M{
+                "$gte":parsedDate,
+            },
+        }
         }
 
         dbFilter := handlers.DocumentFilter {
@@ -80,6 +98,19 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
             // Get the difference in days
             days := int32(diff.Hours() / 24)
 
+            // Additional filters
+            eligible := false;
+
+            if ((setting.SendAllDue) ||
+                (setting.SendDueOnly &&  days < int32(setting.OverDueDays)) || 
+                (setting.SendOverDueOnly  && days >= int32(setting.OverDueDays))){
+                    eligible = true 
+            }
+
+            if !eligible {
+                continue
+            }
+
             var bill osMod.Bill = osMod.Bill {
                 LedgerName: item["LedgerName"].(string),
                 LedgerGroupName: item["LedgerGroupName"].(string),
@@ -88,6 +119,7 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
                 BillDate: billDate,
                 DelayDays: days,
             }
+
             var amount = utils.ParseFloat64(item["Amount"])
             bill.Amount = amount
             totalAmount += amount

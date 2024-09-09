@@ -55,6 +55,7 @@ type OsShareSettings struct {
 	OverDueDays          int                     `bson:"OverDueDays"`
 	SendAllDue           bool                    `bson:"SendAllDue"`
 	SendDueOnly          bool                    `bson:"SendDueOnly"`
+	SendOverDueOnly      bool                    `bson:"SendOverDueOnly"`
 	EmailSetting         models.EmailSettings    `bson:"EmailSetting"`
 	AutoReminderInterval ReminderInterval `bson:"AutoReminderInterval"`
 	ReminderIntervalDays int                     `bson:"ReminderIntervalDays"`
