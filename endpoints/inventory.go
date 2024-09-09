@@ -5,6 +5,8 @@ import (
     "go.mongodb.org/mongo-driver/bson"
     "sg-business-service/handlers"
     "sg-business-service/utils"
+    "sg-business-service/models"
+    "sg-business-service/modules/inventory"
 )
 
 type ItemReportFilter struct {
@@ -90,3 +92,25 @@ func GetStockItemReport(res http.ResponseWriter, req *http.Request) {
     response.ToJson(res)
 }
 
+func GetItemGroupNames(res http.ResponseWriter, req *http.Request) {
+    companyId := req.Header.Get("CompanyId")
+    searchKey := req.URL.Query().Get("searchKey")
+
+    var filter bson.M = nil
+    var pagination = models.Pagination {
+        Apply: true,
+        Limit: 25,
+        Offset: 0,
+    }
+
+    if len(searchKey) > 0 {
+        pagination.Apply = false
+        filter = bson.M {
+        }
+        filter["$and"] = utils.GenerateSearchFilter(searchKey, "Name")
+    }
+    itemGroups := inventory.GetItemGroups(companyId, pagination, filter)
+    response := utils.NewResponseStruct(itemGroups, len(itemGroups))
+    response.ToJson(res)
+
+}

@@ -49,6 +49,8 @@ func main() {
 
     // inventory endpoints
     http.Handle("/stock-items/get/report", corsMiddleware(http.HandlerFunc(endpoints.GetStockItemReport)))
+    http.Handle("/stock-group/get/names", corsMiddleware(http.HandlerFunc(endpoints.GetItemGroupNames)))
+
 
     fmt.Println("Server starting on port 35001...")
     log.Fatal(http.ListenAndServe(":35001", nil))
