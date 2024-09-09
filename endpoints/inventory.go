@@ -106,8 +106,8 @@ func GetItemGroupNames(res http.ResponseWriter, req *http.Request) {
     if len(searchKey) > 0 {
         pagination.Apply = false
         filter = bson.M {
+            "$and": utils.GenerateSearchFilter(searchKey, "Name"),
         }
-        filter["$and"] = utils.GenerateSearchFilter(searchKey, "Name")
     }
     itemGroups := inventory.GetItemGroups(companyId, pagination, filter)
     response := utils.NewResponseStruct(itemGroups, len(itemGroups))
