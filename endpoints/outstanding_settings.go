@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sg-business-service/handlers"
 	"sg-business-service/models"
+	"sg-business-service/modules/outstanding"
 	"sg-business-service/modules/outstanding/reminders"
 	"sg-business-service/utils"
 
@@ -19,7 +20,7 @@ func CreateOsSetting(res http.ResponseWriter, req *http.Request) {
 
     companyId := req.Header.Get("CompanyId")
 
-    body, err := utils.ReadRequestBody[models.OsShareSettings](req)
+    body, err := utils.ReadRequestBody[outstanding.OsShareSettings](req)
     if err != nil {
         http.Error(res, "Unable to read request body", http.StatusBadRequest)
         return
@@ -58,7 +59,7 @@ func UpdateOsSetting(res http.ResponseWriter, req *http.Request) {
 
     companyId := req.Header.Get("CompanyId")
 
-    body, err := utils.ReadRequestBody[models.OsShareSettings](req)
+    body, err := utils.ReadRequestBody[outstanding.OsShareSettings](req)
     if err != nil {
         http.Error(res, "Unable to read request body", http.StatusBadRequest)
         return

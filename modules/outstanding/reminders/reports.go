@@ -1,17 +1,18 @@
 package reminders
 
 import (
-    "fmt"
-    "time"
-    "context"
-    "sg-business-service/handlers"
-    "go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/bson/primitive"
-    "sg-business-service/utils"
-    osMod "sg-business-service/modules/outstanding"
-    configMod "sg-business-service/modules/outstanding/settings"
-    ledgersMod "sg-business-service/modules/ledgers"
-    "sg-business-service/models"
+	"context"
+	"fmt"
+	"sg-business-service/handlers"
+	"sg-business-service/models"
+	ledgersMod "sg-business-service/modules/ledgers"
+	osMod "sg-business-service/modules/outstanding"
+	configMod "sg-business-service/modules/outstanding/settings"
+	"sg-business-service/utils"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func SendEmailReminder(companyId string, ledgerNames []string) {
@@ -21,6 +22,7 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
         return
     }
 
+    // Get Outstanding settings from Database for this company
     settingData, settingErr := configMod.GetAllSettings(companyId)
     if settingData == nil || len(settingData) > 1 {
         fmt.Println(settingErr)
@@ -92,42 +94,14 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
             bills = append(bills, bill)
         }
 
-
         content := ReminderBody {
             PartyName : key,
             Address: "",
             TotalAmount: totalAmount,
             Bills: bills,
         }
-        emailBody := handlers.WriteToTemplate("/home/jayesh/development/research/templateWriter/osTemplate.html", content)
-        handlers.WriteToTemplate("/home/jayesh/development/research/templateWriter/osTemplate.html", content)
+        emailBody := handlers.WriteToTemplate("C:\\Users\\softg\\Projects\\sg-business-service\\osTemplate.html", content)
         emailSetting := setting.EmailSetting
-
-
-        /*
-        for _, item := range emailSetting["To"].(primitive.A) {
-         var to []string
-             // Assert each item to string
-             str, ok := item.(string)
-             if !ok {
-                 fmt.Printf("Item %v is not of type string\n", item)
-                 continue
-             }
-             to = append(to, str)
-         } 
-
-
-         var cc []string
-         for _, item := range emailSetting["Cc"].(primitive.A) {
-             // Assert each item to string
-             str, ok := item.(string)
-             if !ok {
-                 fmt.Printf("Item %v is not of type string\n", item)
-                 continue
-             }
-             cc = append(cc, str)
-         }
-         */
 
         var emailSettings = models.EmailSettings {
             To: emailSetting.To,

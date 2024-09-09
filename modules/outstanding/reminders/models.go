@@ -1,7 +1,7 @@
 package reminders
 
 import (
-    osMod "sg-business-service/modules/outstanding"
+	osMod "sg-business-service/modules/outstanding"
 )
 
 type ReminderBody struct {
@@ -10,4 +10,6 @@ type ReminderBody struct {
     TotalAmount float64
     Bills []osMod.Bill
 }
+
+
 
