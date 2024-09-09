@@ -112,4 +112,5 @@ func GetItemGroupNames(res http.ResponseWriter, req *http.Request) {
     itemGroups := inventory.GetItemGroups(companyId, pagination, filter)
     response := utils.NewResponseStruct(itemGroups, len(itemGroups))
     response.ToJson(res)
+
 }
