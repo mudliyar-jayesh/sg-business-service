@@ -1,17 +1,18 @@
 package endpoints
-import (
-    "time"
-    "context"
-    "net/http"
-    "go.mongodb.org/mongo-driver/bson"
-    "go.mongodb.org/mongo-driver/mongo"
-    "go.mongodb.org/mongo-driver/bson/primitive"
-    "sg-business-service/handlers"
-    "sg-business-service/utils"
-    "strconv"
-    osMod "sg-business-service/modules/outstanding"
-    osSettingMod "sg-business-service/modules/outstanding/settings"
 
+import (
+	"context"
+	"net/http"
+	"sg-business-service/handlers"
+	osMod "sg-business-service/modules/outstanding"
+	osSettingMod "sg-business-service/modules/outstanding/settings"
+	"sg-business-service/utils"
+	"strconv"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func SearchLedgers(res http.ResponseWriter, req *http.Request) {
@@ -207,7 +208,6 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
 
             partyBills = append(partyBills, partyBill)
         }
-
 
         // Skip the first 8 records
         skip := reqBody.Offset * reqBody.Limit

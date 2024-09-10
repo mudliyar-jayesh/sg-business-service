@@ -1,8 +1,7 @@
 package config
 
 import (
-    "os"
-
+	"os"
 )
 
 const (
@@ -17,6 +16,8 @@ const (
     Voucher string = "Vouchers"
     Item string = "StockItems"
     ItemGroup string = "StockGroups"
+    ContactPerson string = "ContactPerson"
+    FollowUp string = "FollowUp"
 )
 
 
