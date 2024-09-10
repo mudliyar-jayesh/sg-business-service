@@ -17,6 +17,7 @@ const (
     Voucher string = "Vouchers"
     Item string = "StockItems"
     ItemGroup string = "StockGroups"
+    SyncInfo string = "LastSyncInfo"
 )
 
 

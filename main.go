@@ -52,6 +52,10 @@ func main() {
     http.Handle("/stock-group/get/names", corsMiddleware(http.HandlerFunc(endpoints.GetItemGroupNames)))
 
 
+    // sync info endpoints
+    http.Handle("/sync-info/get", corsMiddleware(http.HandlerFunc(endpoints.GetLastSync)))
+
+
     fmt.Println("Server starting on port 35001...")
     log.Fatal(http.ListenAndServe(":35001", nil))
 }
