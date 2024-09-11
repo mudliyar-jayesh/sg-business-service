@@ -39,6 +39,6 @@ type FollowUpBill struct {
 
 // ---------- REQUEST MODELS -----------
 type FollowUpCreationRequest struct {
-	followup FollowUp
-	pointOfContact ContactPerson
+	Followup FollowUp
+	PointOfContact ContactPerson
 }
