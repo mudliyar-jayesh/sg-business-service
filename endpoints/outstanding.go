@@ -148,6 +148,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
 			LedgerName:      item["LedgerName"].(string),
 			LedgerGroupName: item["LedgerGroupName"].(string),
 			BillName:        item["Name"].(string),
+			OpeningAmount:   parseFloat64(item["OpeningAmount"]),
 			DueDate:         dueDate,
 			BillDate:        billDate,
 			DelayDays:       days,
@@ -182,11 +183,13 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
 
 			var firstEntry = group[0]
 
+			var totalOpening float64 = 0
 			var totalAmount float64 = 0
 			var totalDue float64 = 0
 			var totalOverDue float64 = 0
 
 			for _, bill := range group {
+				totalOpening += bill.OpeningAmount
 				totalAmount += bill.Amount
 				totalDue += bill.DueAmount
 				totalOverDue += bill.OverDueAmount
@@ -199,6 +202,7 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
 				DueDate:         "",
 				BillDate:        "",
 				DelayDays:       0,
+				OpeningAmount:   totalOpening,
 				Amount:          totalAmount,
 				DueAmount:       totalDue,
 				OverDueAmount:   totalOverDue,

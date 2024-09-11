@@ -40,6 +40,7 @@ type Bill struct {
 	BillDate        string
 	DueDate         string
 	DelayDays       int32
+	OpeningAmount   float64
 	Amount          float64
 	DueAmount       float64
 	OverDueAmount   float64
@@ -75,4 +76,3 @@ const (
 func (r ReminderInterval) String() string {
 	return [...]string{"Daily", "Weekly", "Monthly", "DayWise"}[r-1]
 }
-
