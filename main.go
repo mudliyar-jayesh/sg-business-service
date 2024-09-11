@@ -57,6 +57,11 @@ func main() {
 	// collection endpoints
 	http.Handle("/collection/get", corsMiddleware(http.HandlerFunc(osEndpoints.GetCollectionOverview)))
 
+    // followup endpoints
+	http.Handle("/os/followup/sample", corsMiddleware(http.HandlerFunc(osEndpoints.SampleFollowUp)))
+	http.Handle("/os/followup/status", corsMiddleware(http.HandlerFunc(osEndpoints.GetBillStatusList)))
+    http.Handle("os/followup/create", corsMiddleware(http.HandlerFunc(osEndpoints.CreateFollowUp)))
+
 	fmt.Println("Server starting on port 35001...")
 	log.Fatal(http.ListenAndServe(":35001", nil))
 }
