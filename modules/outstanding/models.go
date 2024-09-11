@@ -34,16 +34,19 @@ type OsReportFilter struct {
 }
 
 type Bill struct {
-	LedgerName      string
-	LedgerGroupName string
-	BillName        string
-	BillDate        string
-	DueDate         string
-	DelayDays       int32
-	OpeningAmount   float64
-	Amount          float64
-	DueAmount       float64
-	OverDueAmount   float64
+	LedgerName        string
+	LedgerGroupName   string
+	BillName          string
+	BillDate          string
+	DueDate           string
+	DelayDays         int32
+	OpeningAmount     float64
+	ClosingAmount     float64
+	Amount            float64
+	DueAmount         float64
+	OverDueAmount     float64
+	PendingPercentage float64
+	PaidPercentage    float64
 }
 
 type OsShareSettings struct {
