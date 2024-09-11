@@ -33,7 +33,6 @@ func main() {
     handlers.ConnectToMongo(mongoConfig)
     handlers.MakeGroupCache()
 
-    http.Handle("/os/followup/sample", corsMiddleware(http.HandlerFunc(endpoints.)))
     http.Handle("/os/send-email", corsMiddleware(http.HandlerFunc(endpoints.SendLedgerEmail)))
 
     http.Handle("/os/aggr", corsMiddleware(http.HandlerFunc(endpoints.TempOS)))
