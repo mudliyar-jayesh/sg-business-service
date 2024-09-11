@@ -15,7 +15,7 @@ type ContactPerson struct {
 type FollowUp struct {
 	ID       primitive.ObjectID  `bson:"_id,omitempty"`
 	RefPrevFollowUpId *string	 `bson:"RefPrevFollowUpId"`
-	FollowUpId int   		     `bson:"FollowUpId"`
+	FollowUpId string   		     `bson:"FollowUpId"`
 	ContactPersonId  string 	 `bson:ContactPersonId`
 	PersonInChargeId uint32      `bson:PersonInChargeId`
 	PartyName string			 `bson:"PartyName"`
@@ -34,4 +34,11 @@ const (
 type FollowUpBill struct {
 	BillId string `bson:"BillId"`
 	Resolved bool `bson:"Resolved"`
+}
+
+
+// ---------- REQUEST MODELS -----------
+type FollowUpCreationRequest struct {
+	followup FollowUp
+	pointOfContact ContactPerson
 }

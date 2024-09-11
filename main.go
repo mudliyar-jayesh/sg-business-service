@@ -1,12 +1,12 @@
-package main 
+package main
 
 import (
-    "log"
-    "fmt"
-    "net/http"
-    "sg-business-service/config" 
-    "sg-business-service/handlers" 
-    "sg-business-service/endpoints" 
+	"fmt"
+	"log"
+	"net/http"
+	"sg-business-service/config"
+	"sg-business-service/endpoints"
+	"sg-business-service/handlers"
 )
 
 func corsMiddleware(next http.Handler) http.Handler {
@@ -33,6 +33,7 @@ func main() {
     handlers.ConnectToMongo(mongoConfig)
     handlers.MakeGroupCache()
 
+    http.Handle("/os/followup/sample", corsMiddleware(http.HandlerFunc(endpoints.)))
     http.Handle("/os/send-email", corsMiddleware(http.HandlerFunc(endpoints.SendLedgerEmail)))
 
     http.Handle("/os/aggr", corsMiddleware(http.HandlerFunc(endpoints.TempOS)))
@@ -50,6 +51,10 @@ func main() {
     // inventory endpoints
     http.Handle("/stock-items/get/report", corsMiddleware(http.HandlerFunc(endpoints.GetStockItemReport)))
     http.Handle("/stock-group/get/names", corsMiddleware(http.HandlerFunc(endpoints.GetItemGroupNames)))
+
+
+    // sync info endpoints
+    http.Handle("/sync-info/get", corsMiddleware(http.HandlerFunc(endpoints.GetLastSync)))
 
 
     fmt.Println("Server starting on port 35001...")

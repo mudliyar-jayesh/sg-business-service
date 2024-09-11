@@ -18,6 +18,7 @@ const (
     ItemGroup string = "StockGroups"
     ContactPerson string = "ContactPerson"
     FollowUp string = "FollowUp"
+    SyncInfo string = "LastSyncInfo"
 )
 
 
