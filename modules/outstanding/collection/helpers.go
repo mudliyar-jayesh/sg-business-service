@@ -2,11 +2,12 @@ package collection
 
 import (
 	"context"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"sg-business-service/config"
 	"sg-business-service/handlers"
 	"sg-business-service/models"
-	"sg-business-service/utils"
+	//"sg-business-service/utils"
 )
 
 func getFieldBySortKey(sortKey string) string {
@@ -49,24 +50,27 @@ func GetOverViewByFilter(mongoFilter bson.M, filter models.RequestFilter) []Coll
 		Projection: bson.M{
 			"LedgerName":      1,
 			"LedgerGroupName": 1,
-			"BillDate":        "$BillDate.Date",
-			"DueDate":         "$BillCreditPeriod.DueDate",
-			"ClosingBal":      "$ClosingBal.Amount",
-			"OpeningBal":      "$OpeningBal.Amount",
-			"Name":            "$Name",
-			"_id":             0,
+			/*"BillDate":        "$BillDate.Date",
+			"DueDate":         "$BillCreditPeriod.DueDate",*/
+			"ClosingBal": "$ClosingBal.Amount",
+			"OpeningBal": "$OpeningBal.Amount",
+			"Name":       1,
+			"_id":        0,
 		},
-		Sorting: bson.D{
+		/*Sorting: bson.D{
 			{
 				Key:   getFieldBySortKey(filter.SortKey),
 				Value: utils.GetValueBySortOrder(filter.SortOrder),
 			},
-		},
+		}, */
 	}
 
 	var handler = GetCollection()
 	collections, err := handlers.GetDocuments[CollectionOverview](handler, docFilter)
+	fmt.Printf("Filters : %v", len(collections))
+
 	if err != nil {
+		fmt.Println("Error occured in while getting collection")
 		return make([]CollectionOverview, 0)
 	}
 	return collections
