@@ -58,15 +58,13 @@ func getContactPersonById (companyId, id string) *ContactPerson{
 	return &res[0]
 }
 
-func createContactPerson (person ContactPerson)  {
-	newUUid := uuid.New()
-	person.PersonId = newUUid.String()
+func createContactPerson (person ContactPerson) (string, error) {
+	guid := uuid.New()
+	person.PersonId = guid.String()
 
 	_, err := handlers.InsertDocument[ContactPerson](config.AppDb, config.ContactPerson, person)
 
-	if err != nil {
-		fmt.Println(err);
-	}
+	return person.PersonId, err
 }
 
 

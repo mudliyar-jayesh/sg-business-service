@@ -1,6 +1,10 @@
 package followups
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type ContactPerson struct {
 	ID       primitive.ObjectID  `bson:"_id,omitempty"`
@@ -15,27 +19,29 @@ type ContactPerson struct {
 type FollowUp struct {
 	ID       primitive.ObjectID  `bson:"_id,omitempty"`
 	RefPrevFollowUpId *string	 `bson:"RefPrevFollowUpId"`
-	FollowUpId string   		     `bson:"FollowUpId"`
+	FollowUpId string   		 `bson:"FollowUpId"`
 	ContactPersonId  string 	 `bson:ContactPersonId`
-	PersonInChargeId uint32      `bson:PersonInChargeId`
+	PersonInChargeId uint64      `bson:PersonInChargeId`
 	PartyName string			 `bson:"PartyName"`
 	Description string 			 `bson:Description`
 	Status FollowUpStatus        `bson:Status`
 	FollowUpBills []FollowUpBill `bson:FollowUpBills`
+	NextFollowUpDate time.Time	 `bson:NextFollowUpDate`
 }
 
 type FollowUpStatus int
 
 const (
 	Pending FollowUpStatus = iota
+	Scheduled
 	Completed
 )
 
+
 type FollowUpBill struct {
 	BillId string `bson:"BillId"`
-	Resolved bool `bson:"Resolved"`
+	Resolved FollowUpStatus `bson:"Resolved"`
 }
-
 
 // ---------- REQUEST MODELS -----------
 type FollowUpCreationRequest struct {
