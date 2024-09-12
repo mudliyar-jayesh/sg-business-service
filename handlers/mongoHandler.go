@@ -147,6 +147,23 @@ func GetDocuments[T any](handler *MongoHandler, docFilter DocumentFilter) ([]T, 
 	}
 	return results, err
 }
+func (handler *MongoHandler) InsertMany(documents []interface{}) ([]primitive.ObjectID, error) {
+
+	// Insert the documents
+	result, err := handler.collection.InsertMany(context.TODO(), documents)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert inserted IDs to a slice of ObjectIDs
+	var insertedIDs []primitive.ObjectID
+	for _, id := range result.InsertedIDs {
+		insertedIDs = append(insertedIDs, id.(primitive.ObjectID))
+	}
+
+	fmt.Printf("Inserted %d documents\n", len(insertedIDs))
+	return insertedIDs, nil
+}
 
 func InsertDocument[T any](dbName string, collName string, document T) (primitive.ObjectID, error) {
 	// Select the database and collection
@@ -201,4 +218,24 @@ func (handler *MongoHandler) AggregatePipeline(dbName string, collectionName str
 		fmt.Println(err)
 	}
 	return results
+}
+
+func GetDistinct[T any](handler *MongoHandler, fieldName string, filter bson.M) ([]T, error) {
+	var distinctValues []T
+	cursor, err := handler.collection.Distinct(context.TODO(), fieldName, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, value := range cursor {
+		var typedValue T
+		// Use type assertion to convert the value to the desired type
+		typedValue, ok := value.(T)
+		if !ok {
+			return nil, fmt.Errorf("type assertion failed for value: %v", value)
+		}
+		distinctValues = append(distinctValues, typedValue)
+	}
+
+	return distinctValues, nil
 }

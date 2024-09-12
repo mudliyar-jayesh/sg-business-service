@@ -7,6 +7,7 @@ import (
 	"sg-business-service/config"
 	"sg-business-service/endpoints"
 	"sg-business-service/handlers"
+	dspEndpoints "sg-business-service/modules/dsp/endpoints"
 	osEndpoints "sg-business-service/modules/outstanding/endpoints"
 )
 
@@ -57,10 +58,15 @@ func main() {
 	// collection endpoints
 	http.Handle("/collection/get", corsMiddleware(http.HandlerFunc(osEndpoints.GetCollectionOverview)))
 
+<<<<<<< HEAD
     // followup endpoints
 	http.Handle("/os/followup/sample", corsMiddleware(http.HandlerFunc(osEndpoints.SampleFollowUp)))
 	http.Handle("/os/followup/status", corsMiddleware(http.HandlerFunc(osEndpoints.GetBillStatusList)))
     http.Handle("os/followup/create", corsMiddleware(http.HandlerFunc(osEndpoints.CreateFollowUp)))
+=======
+	// dsp endponts
+	http.Handle("/dsp/upload", corsMiddleware(http.HandlerFunc(dspEndpoints.UploadCsvFile)))
+>>>>>>> b4f9d60db7912f1e886e0d8a7e7d7ae1b27ceb80
 
 	fmt.Println("Server starting on port 35001...")
 	log.Fatal(http.ListenAndServe(":35001", nil))
