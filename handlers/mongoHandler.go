@@ -217,3 +217,23 @@ func (handler *MongoHandler) AggregatePipeline(dbName string, collectionName str
 	}
 	return results
 }
+
+func GetDistinct[T any](handler *MongoHandler, fieldName string, filter bson.M) ([]T, error) {
+	var distinctValues []T
+	cursor, err := handler.collection.Distinct(context.TODO(), fieldName, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, value := range cursor {
+		var typedValue T
+		// Use type assertion to convert the value to the desired type
+		typedValue, ok := value.(T)
+		if !ok {
+			return nil, fmt.Errorf("type assertion failed for value: %v", value)
+		}
+		distinctValues = append(distinctValues, typedValue)
+	}
+
+	return distinctValues, nil
+}
