@@ -3,8 +3,12 @@ package endpoints
 import (
 	"fmt"
 	"net/http"
+	"sg-business-service/models"
+	osMod "sg-business-service/modules/outstanding"
 	"sg-business-service/modules/outstanding/followups"
 	"sg-business-service/utils"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func SampleFollowUp(res http.ResponseWriter, req  *http.Request) {
@@ -27,8 +31,20 @@ func GetBills(res http.ResponseWriter, req *http.Request) {
 	headers, err := utils.ResolveHeaders(&req.Header)
 	if headers.HandleErrorOrIllegalValues(res, &err){return}
 
+	searchText := req.URL.Query().Get("searchText")
 
-		
+	reqFilter := models.RequestFilter{Batch: models.Pagination{Apply: true, Limit: 25}}
+
+	var filter []bson.M = nil
+
+	if len(searchText) > 0 {
+		filter = utils.GenerateSearchFilter(searchText, "Name")
+	}
+	
+	bills := osMod.GetBills(headers.CompanyId, reqFilter, true, filter)
+
+	response := utils.NewResponseStruct(bills, len(bills))
+	response.ToJson(res)
 }
 
 func GetContactPerson(res http.ResponseWriter, req *http.Request) {
