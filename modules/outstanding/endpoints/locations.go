@@ -34,8 +34,6 @@ func GetLocationWiseOverview(res http.ResponseWriter, req *http.Request) {
 		stateNames := dsp.GetStates()
 		ledgers = ledgerMod.GetLedgersByStates(companyId, stateNames, requestFilter)
 	case osMod.PincodeWise:
-		//pincodes := dsp.GetPincodes()
-		//fmt.Println("HIT, count: ", len(pincodes))
 		ledgers = ledgerMod.GetLedgersByPincodes(companyId, requestFilter, nil)
 	case osMod.RegionWise:
 		regions := dsp.GetRegions(body.State)
@@ -60,14 +58,21 @@ func GetLocationWiseOverview(res http.ResponseWriter, req *http.Request) {
 		ledgerNames = append(ledgerNames, value.Name)
 	}
 
-	filter := bson.M{
-		"LedgerName": bson.M{
-			"$in": ledgerNames,
-		},
-	}
+	var allBills []osMod.MetaBill
+	utils.ProcessBatch(ledgerNames, 1000, func(names []string) {
 
-	bills := osMod.GetBills(companyId, body.Filter, isDebit, filter)
+		filter := []bson.M{
+			{
+				"LedgerName": bson.M{
+					"$in": names,
+				},
+			},
+		}
 
-	response := utils.NewResponseStruct(bills, len(bills))
+		bills := osMod.GetBills(companyId, body.Filter, isDebit, filter)
+		allBills = append(allBills, bills...)
+	})
+
+	response := utils.NewResponseStruct(allBills, len(allBills))
 	response.ToJson(res)
 }

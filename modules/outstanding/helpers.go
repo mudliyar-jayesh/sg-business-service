@@ -68,7 +68,7 @@ func GetOutstandingByFilter(mongoFilter bson.M, requestFilter OsReportFilter, us
 	return handler.FindDocuments(docFilter)
 }
 
-func GetBills(companyId string, requestFilter models.RequestFilter, isDebit bool, additionalFilter bson.M) []MetaBill {
+func GetBills(companyId string, requestFilter models.RequestFilter, isDebit bool, additionalFilter []bson.M) []MetaBill {
 	var parentName string = "Current Assets"
 	if !isDebit {
 		parentName = "Current Liabilities"
