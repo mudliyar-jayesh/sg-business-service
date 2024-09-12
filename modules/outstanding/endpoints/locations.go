@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"net/http"
 	"sg-business-service/models"
@@ -33,8 +34,9 @@ func GetLocationWiseOverview(res http.ResponseWriter, req *http.Request) {
 		stateNames := dsp.GetStates()
 		ledgers = ledgerMod.GetLedgersByStates(companyId, stateNames, requestFilter)
 	case osMod.PincodeWise:
-		pincodes := dsp.GetPincodes()
-		ledgers = ledgerMod.GetLedgersByPincodes(companyId, pincodes, requestFilter)
+		//pincodes := dsp.GetPincodes()
+		//fmt.Println("HIT, count: ", len(pincodes))
+		ledgers = ledgerMod.GetLedgersByPincodes(companyId, requestFilter, nil)
 	case osMod.RegionWise:
 		regions := dsp.GetRegions(body.State)
 		dspEntries := dsp.GetByRegions(regions)
@@ -42,8 +44,7 @@ func GetLocationWiseOverview(res http.ResponseWriter, req *http.Request) {
 		for _, value := range dspEntries {
 			pincodes = append(pincodes, value.Pincode)
 		}
-		ledgers = ledgerMod.GetLedgersByPincodes(companyId, pincodes, requestFilter)
-
+		ledgers = ledgerMod.GetLedgersByPincodes(companyId, requestFilter, &pincodes)
 	case osMod.DistrictWise:
 		districts := dsp.GetDistrictsByState(body.State)
 		dspEntries := dsp.GetByDistrict(districts)
@@ -51,7 +52,7 @@ func GetLocationWiseOverview(res http.ResponseWriter, req *http.Request) {
 		for _, value := range dspEntries {
 			pincodes = append(pincodes, value.Pincode)
 		}
-		ledgers = ledgerMod.GetLedgersByPincodes(companyId, pincodes, requestFilter)
+		ledgers = ledgerMod.GetLedgersByPincodes(companyId, requestFilter, &pincodes)
 	}
 
 	var ledgerNames []string
