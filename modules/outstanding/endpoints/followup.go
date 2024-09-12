@@ -15,9 +15,8 @@ func SampleFollowUp(res http.ResponseWriter, req  *http.Request) {
 }
 
 func GetBillStatusList(res http.ResponseWriter, req *http.Request){
-	listOfStatus := [...]string{"Pending", "Scheduled", "Completed"}
-
-	response := utils.NewResponseStruct(listOfStatus, 3)
+	mappings := followups.GetFollowUpStatusMappings()
+	response := utils.NewResponseStruct(mappings, 1)
 	response.ToJson(res)
 }
 
