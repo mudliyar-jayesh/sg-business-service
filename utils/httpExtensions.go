@@ -23,7 +23,6 @@ func GetBoolFromQuery(req *http.Request, queryParameter string) bool {
     return value
 }
 
-
 func ResolveHeaders(headers *http.Header) (RequestHeader, error) {
     var companyid string = headers.Get("companyid")
     var userid_str string = headers.Get("userid")
@@ -31,6 +30,21 @@ func ResolveHeaders(headers *http.Header) (RequestHeader, error) {
      userid, err := strconv.ParseUint(userid_str, 10, 64)
 
      return RequestHeader{CompanyId: companyid, UserId: userid}, err
+}
+
+func (headers *RequestHeader) HandleErrorOrIllegalValues(res http.ResponseWriter, err *error) bool {
+    /**
+        Handles header errors and detects false headers like empty companyid or zero userid,
+        if found to be false header then writes to http.ResponseWriter and returns true
+        otherwise returns false.
+    */
+    // TODO: Add additional checks for user-company_id linkages like BMRM middleware
+	if err != nil || len(headers.CompanyId) == 0 || headers.UserId == 0{
+		res.WriteHeader(http.StatusUnauthorized)
+		res.Write([]byte("Attempt to unauthorized access without secure headers"))
+        return true 
+	}
+    return false
 }
 
 func ReadRequestBody[T any](req *http.Request) (*T, error) {

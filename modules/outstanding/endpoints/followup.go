@@ -23,6 +23,8 @@ func GetBillStatusList(res http.ResponseWriter, req *http.Request){
 func CreateFollowUp(res http.ResponseWriter, req *http.Request){
 	headers, err := utils.ResolveHeaders(&req.Header)
 
+	if headers.HandleErrorOrIllegalValues(res, &err){return}
+		
 	if err != nil {
 		res.WriteHeader(http.StatusUnauthorized)
 		res.Write([]byte("Attempt to unauthorized access without secure headers"))
@@ -46,4 +48,14 @@ func CreateFollowUp(res http.ResponseWriter, req *http.Request){
 			res.Write([]byte(fmt.Sprintf("Error while creating followup %v", err)))
 			return
 		}
+}
+
+func GetFollowupList(res http.ResponseWriter,  req *http.Request){
+	headers, err := utils.ResolveHeaders(&req.Header)
+	
+	if err != nil {
+		res.WriteHeader(http.StatusUnauthorized)
+		res.Write([]byte("Attempt to unauthorized access without secure headers"))
+		return
+	}
 }
