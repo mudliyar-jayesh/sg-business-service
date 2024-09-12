@@ -10,6 +10,8 @@ const (
 )
 
 const (
+    ContactPerson string = "ContactPerson"
+    FollowUp string = "FollowUp"
 	Bill        string = "Bills"
 	DSP         string = "DSP"
 	Ledger      string = "Ledgers"

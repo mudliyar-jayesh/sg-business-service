@@ -3,13 +3,14 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"sg-business-service/config"
+	"sg-business-service/utils"
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"sg-business-service/config"
-	"sg-business-service/utils"
-	"time"
 )
 
 type DocumentFilter struct {
@@ -114,6 +115,7 @@ func (handler *MongoHandler) FindDocuments(docFilter DocumentFilter) DocumentRes
 		Err:  err,
 	}
 }
+
 
 func GetDocuments[T any](handler *MongoHandler, docFilter DocumentFilter) ([]T, error) {
 	findOptions := options.Find()

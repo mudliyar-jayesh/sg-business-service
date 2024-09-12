@@ -1,9 +1,10 @@
 package utils
+
 import (
-    "io"
-    "encoding/json"
-    "net/http"
-    "strconv"
+	"encoding/json"
+	"io"
+	"net/http"
+	"strconv"
 )
 func GetValueBySortOrder(sortOrder string) int {
     if len(sortOrder) > 0 && sortOrder == "desc" {
@@ -22,6 +23,16 @@ func GetBoolFromQuery(req *http.Request, queryParameter string) bool {
     return value
 }
 
+
+func ResolveHeaders(headers *http.Header) (RequestHeader, error) {
+    var companyid string = headers.Get("companyid")
+    var userid_str string = headers.Get("userid")
+
+     userid, err := strconv.ParseUint(userid_str, 10, 64)
+
+     return RequestHeader{CompanyId: companyid, UserId: userid}, err
+}
+
 func ReadRequestBody[T any](req *http.Request) (*T, error) {
     body, err := io.ReadAll(req.Body)
     if err != nil {
@@ -34,6 +45,11 @@ func ReadRequestBody[T any](req *http.Request) (*T, error) {
         return nil, err
     }
     return &data, nil
+}
+
+type RequestHeader struct {
+    CompanyId string
+    UserId uint64
 }
 
 type ResponseStruct struct {
