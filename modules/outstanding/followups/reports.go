@@ -9,8 +9,8 @@ func GetContactPersons(companyId string, partyName string) ([] ContactPerson){
 	return contactPersons;
 }
 
-func GetFollowUpList(companyId string, partyName string){
-
+func GetFollowUpList(companyId string, partyName string) []FollowUp{
+	return getFollowupListByParty(companyId, partyName)	
 }
 
 func CreateFollowUp(fup FollowUp, cperson *ContactPerson) error {

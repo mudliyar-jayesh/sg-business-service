@@ -64,6 +64,7 @@ func main() {
 	http.Handle("/os/followup/sample", corsMiddleware(http.HandlerFunc(osEndpoints.SampleFollowUp)))
 	http.Handle("/os/followup/status/get", corsMiddleware(http.HandlerFunc(osEndpoints.GetBillStatusList)))
 	http.Handle("/os/followup/create", corsMiddleware(http.HandlerFunc(osEndpoints.CreateFollowUp)))
+	http.Handle("/os/followup/get", corsMiddleware(http.HandlerFunc(osEndpoints.GetFollowupList)))
 
 	http.Handle("/os/get/bills", corsMiddleware(http.HandlerFunc(osEndpoints.GetBills)))
 

@@ -33,6 +33,23 @@ func getFollowupById (companyId, id string) *FollowUp{
 	return &res[0]
 }
 
+func getFollowupListByParty (companyId, partyName string) []FollowUp{
+	filter := handlers.DocumentFilter{UsePagination: false, Ctx: context.TODO(), Filter: bson.M{
+		"CompanyId": companyId,
+		"PartyName": partyName,
+	}}
+
+	collection := getFollowupCollection()
+
+	res, err := handlers.GetDocuments[FollowUp](collection, filter)
+
+	if err != nil || len(res) < 1{
+		return nil
+	}
+
+	return res
+}
+
 func insertFollowUpToDB(followup FollowUp) (string, error) {
 	guid := uuid.New()
 	followup.FollowUpId = guid.String() 

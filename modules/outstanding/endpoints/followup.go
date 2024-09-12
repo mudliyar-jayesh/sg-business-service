@@ -96,5 +96,10 @@ func GetFollowupList(res http.ResponseWriter,  req *http.Request){
 	headers, err := utils.ResolveHeaders(&req.Header)
 	if headers.HandleErrorOrIllegalValues(res, &err){return}
 
+	partyName := req.URL.Query().Get("partyName")
 
+	partyFollowups := followups.GetFollowUpList(headers.CompanyId, partyName)
+
+	response := utils.NewResponseStruct(partyFollowups, len(partyFollowups))
+	response.ToJson(res)
 }
