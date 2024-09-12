@@ -72,10 +72,12 @@ func insertFollowUpToDB(followup FollowUp) (string, error) {
 	guid := uuid.New()
 	followup.FollowUpId = guid.String() 
 
-	_, err := handlers.InsertDocument[FollowUp](config.AppDb, config.FollowUp, followup)
+	id, err := handlers.InsertDocument[FollowUp](config.AppDb, config.FollowUp, followup)
 
 	if err != nil {
 		fmt.Println(err);
+	}else{
+		fmt.Println(id.String())	
 	}
 
 	return followup.FollowUpId, err

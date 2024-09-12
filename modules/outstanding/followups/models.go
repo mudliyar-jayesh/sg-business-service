@@ -7,7 +7,7 @@ import (
 )
 
 type ContactPerson struct {
-	ID       primitive.ObjectID  `bson:"_id,omitempty"`
+	ID       *primitive.ObjectID  `bson:"_id,omitempty"`
 	PersonId string				 `bson:"PersonId`
 	CompanyId string			 `bson:"CompanyId"`
 	Name      string			 `bson:"Name"`
@@ -17,7 +17,7 @@ type ContactPerson struct {
 }
 
 type FollowUp struct {
-	ID       primitive.ObjectID  `bson:"_id,omitempty"`
+	ID       *primitive.ObjectID  `bson:"_id,omitempty"`
 	RefPrevFollowUpId *string	 `bson:"RefPrevFollowUpId"`
 	FollowUpId string   		 `bson:"FollowUpId"`
 	ContactPersonId  string 	 `bson:ContactPersonId`
@@ -40,7 +40,7 @@ const (
 
 type FollowUpBill struct {
 	BillId string `bson:"BillId"`
-	Resolved FollowUpStatus `bson:"Resolved"`
+	Status FollowUpStatus `bson:"Status"`
 }
 
 // ---------- REQUEST MODELS -----------

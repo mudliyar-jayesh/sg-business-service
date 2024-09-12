@@ -25,17 +25,26 @@ func CreateFollowUp(res http.ResponseWriter, req *http.Request){
 	headers, err := utils.ResolveHeaders(&req.Header)
 
 	if err != nil {
-		// Give error
+		res.WriteHeader(http.StatusUnauthorized)
+		res.Write([]byte("Attempt to unauthorized access without secure headers"))
+		return
 	}
 
 	requestBody, err := utils.ReadRequestBody[followups.FollowUpCreationRequest](req)
 
+	if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			res.Write([]byte(fmt.Sprintf("Error while parsing request body %v", err)))
+			return
+		}
+
 	requestBody.Followup.PersonInChargeId = headers.UserId
 
+	err = followups.CreateFollowUp(requestBody.Followup, &requestBody.PointOfContact)
+
 	if err != nil {
-		fmt.Printf("Error while parsing request body %v", err)
-	}
-
-	followups.CreateFollowUp(requestBody.Followup, &requestBody.PointOfContact)
-
+			res.WriteHeader(http.StatusInternalServerError)
+			res.Write([]byte(fmt.Sprintf("Error while creating followup %v", err)))
+			return
+		}
 }
