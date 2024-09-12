@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func CreateFollowUp(fup FollowUp, cperson *ContactPerson) {
+func CreateFollowUp(fup FollowUp, cperson *ContactPerson) error {
 	/***
 		Creates a follow up and creates contact person is not an existing provided
 
@@ -30,8 +30,9 @@ func CreateFollowUp(fup FollowUp, cperson *ContactPerson) {
 	guid, err := insertFollowUpToDB(fup)
 
 	if err != nil {
-		fmt.Println(err);
+		return err
 	}
 
 	fmt.Printf("Followup with %s inserted to DB", guid)
+	return nil;
 }
