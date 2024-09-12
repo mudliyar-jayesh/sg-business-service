@@ -63,7 +63,7 @@ func main() {
 	// followup endpoints
 	http.Handle("/os/followup/sample", corsMiddleware(http.HandlerFunc(osEndpoints.SampleFollowUp)))
 	http.Handle("/os/followup/status", corsMiddleware(http.HandlerFunc(osEndpoints.GetBillStatusList)))
-	http.Handle("os/followup/create", corsMiddleware(http.HandlerFunc(osEndpoints.CreateFollowUp)))
+	http.Handle("/os/followup/create", corsMiddleware(http.HandlerFunc(osEndpoints.CreateFollowUp)))
 
 	// dsp endponts
 	http.Handle("/dsp/upload", corsMiddleware(http.HandlerFunc(dspEndpoints.UploadCsvFile)))
