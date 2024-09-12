@@ -53,9 +53,8 @@ func CreateFollowUp(res http.ResponseWriter, req *http.Request){
 func GetFollowupList(res http.ResponseWriter,  req *http.Request){
 	headers, err := utils.ResolveHeaders(&req.Header)
 	
-	if err != nil {
-		res.WriteHeader(http.StatusUnauthorized)
-		res.Write([]byte("Attempt to unauthorized access without secure headers"))
-		return
-	}
+	if headers.HandleErrorOrIllegalValues(res, &err){return}
+
+
+
 }
