@@ -4,6 +4,15 @@ import (
 	"fmt"
 )
 
+func GetContactPersons(companyId string, partyName string) ([] ContactPerson){
+	contactPersons := getContactPersonList(companyId, partyName)
+	return contactPersons;
+}
+
+func GetFollowUpList(companyId string, partyName string){
+
+}
+
 func CreateFollowUp(fup FollowUp, cperson *ContactPerson) error {
 	/***
 		Creates a follow up and creates contact person is not an existing provided

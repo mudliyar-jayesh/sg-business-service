@@ -23,6 +23,25 @@ func GetBillStatusList(res http.ResponseWriter, req *http.Request){
 	response.ToJson(res)
 }
 
+func GetBills(res http.ResponseWriter, req *http.Request) {
+	headers, err := utils.ResolveHeaders(&req.Header)
+	if headers.HandleErrorOrIllegalValues(res, &err){return}
+
+
+		
+}
+
+func GetContactPerson(res http.ResponseWriter, req *http.Request) {
+	headers, err := utils.ResolveHeaders(&req.Header)
+	if headers.HandleErrorOrIllegalValues(res, &err){return}
+
+	partyName := req.URL.Query().Get("partyName")
+	contactPersons := followups.GetContactPersons(headers.CompanyId, partyName)
+
+	response := utils.NewResponseStruct(contactPersons, len(contactPersons))
+	response.ToJson(res)
+}
+
 func CreateFollowUp(res http.ResponseWriter, req *http.Request){
 	headers, err := utils.ResolveHeaders(&req.Header)
 	if headers.HandleErrorOrIllegalValues(res, &err){return}
@@ -54,9 +73,7 @@ func CreateFollowUp(res http.ResponseWriter, req *http.Request){
 
 func GetFollowupList(res http.ResponseWriter,  req *http.Request){
 	headers, err := utils.ResolveHeaders(&req.Header)
-	
 	if headers.HandleErrorOrIllegalValues(res, &err){return}
-
 
 
 }

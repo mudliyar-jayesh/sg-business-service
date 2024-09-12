@@ -50,6 +50,7 @@ type FollowUpBill struct {
 	Status FollowUpStatus `bson:"Status"`
 }
 
+
 // ---------- REQUEST MODELS -----------
 type FollowUpCreationRequest struct {
 	Followup FollowUp

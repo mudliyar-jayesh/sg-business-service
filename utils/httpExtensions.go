@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 )
+
 func GetValueBySortOrder(sortOrder string) int {
     if len(sortOrder) > 0 && sortOrder == "desc" {
         return -1
@@ -39,7 +40,7 @@ func (headers *RequestHeader) HandleErrorOrIllegalValues(res http.ResponseWriter
         otherwise returns false.
     */
     // TODO: Add additional checks for user-company_id linkages like BMRM middleware
-	if err != nil || len(headers.CompanyId) == 0 || headers.UserId == 0{
+	if *err != nil || len(headers.CompanyId) == 0 || headers.UserId == 0{
 		res.WriteHeader(http.StatusUnauthorized)
 		res.Write([]byte("Attempt to unauthorized access without secure headers"))
         return true 

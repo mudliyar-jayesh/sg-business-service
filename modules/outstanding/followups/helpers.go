@@ -32,6 +32,22 @@ func getFollowupById (companyId, id string) *FollowUp{
 
 	return &res[0]
 }
+
+func insertFollowUpToDB(followup FollowUp) (string, error) {
+	guid := uuid.New()
+	followup.FollowUpId = guid.String() 
+
+	id, err := handlers.InsertDocument[FollowUp](config.AppDb, config.FollowUp, followup)
+
+	if err != nil {
+		fmt.Println(err);
+	}else{
+		fmt.Println(id.String())	
+	}
+
+	return followup.FollowUpId, err
+}
+
 // ------------ END FOLLOW UP ----------------
 
 
@@ -58,6 +74,23 @@ func getContactPersonById (companyId, id string) *ContactPerson{
 	return &res[0]
 }
 
+func getContactPersonList (companyId string, partyName string) []ContactPerson{
+	filter := handlers.DocumentFilter{UsePagination: false, Ctx: context.TODO(), Filter: bson.M{
+		"CompanyId": companyId,
+		"PartyName": partyName,
+	}}
+
+	collection := getContactCollection() 
+
+	res, err := handlers.GetDocuments[ContactPerson](collection, filter)
+
+	if err != nil || len(res) < 1{
+		return nil
+	}
+
+	return res
+}
+
 func createContactPerson (person ContactPerson) (string, error) {
 	guid := uuid.New()
 	person.PersonId = guid.String()
@@ -65,22 +98,6 @@ func createContactPerson (person ContactPerson) (string, error) {
 	_, err := handlers.InsertDocument[ContactPerson](config.AppDb, config.ContactPerson, person)
 
 	return person.PersonId, err
-}
-
-
-func insertFollowUpToDB(followup FollowUp) (string, error) {
-	guid := uuid.New()
-	followup.FollowUpId = guid.String() 
-
-	id, err := handlers.InsertDocument[FollowUp](config.AppDb, config.FollowUp, followup)
-
-	if err != nil {
-		fmt.Println(err);
-	}else{
-		fmt.Println(id.String())	
-	}
-
-	return followup.FollowUpId, err
 }
 // ------------ END CONTACT PERSON COLLECTION -----------
 
