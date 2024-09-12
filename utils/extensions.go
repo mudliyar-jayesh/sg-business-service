@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
+	"math"
 	"reflect"
 	"strconv"
 )
@@ -111,4 +112,38 @@ func ParseFloat64(value interface{}) float64 {
 		return 0 // Return default value if type is not handled
 	}
 	return result
+}
+func ProcessBatch[T any](values []T, chunkSize int, predicate func([]T)) {
+	var defaultChunkSize = 100
+	var dataLength = len(values)
+
+	var workingChuckSize int = chunkSize
+	if dataLength < chunkSize {
+		workingChuckSize = defaultChunkSize
+		if dataLength < defaultChunkSize {
+			workingChuckSize = dataLength
+		}
+	}
+
+	var chunkCount int = int(math.Ceil(float64(dataLength / workingChuckSize)))
+
+	for chunkNumber := 0; chunkNumber < chunkCount; chunkNumber++ {
+		var slice []T = getChunk(values, workingChuckSize, chunkNumber)
+		predicate(slice)
+	}
+
+}
+
+func getChunk[T any](list []T, chunkSize, chunkNumber int) []T {
+	startIndex := chunkNumber * chunkSize
+	if startIndex >= len(list) {
+		return nil
+	}
+
+	endIndex := startIndex + chunkSize
+	if endIndex > len(list) {
+		endIndex = len(list)
+	}
+
+	return list[startIndex:endIndex]
 }
