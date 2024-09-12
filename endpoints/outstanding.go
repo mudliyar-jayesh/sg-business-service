@@ -145,15 +145,18 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
 		// Get the difference in days
 		days := int32(diff.Hours() / 24)
 
+		var amount = parseFloat64(item["Amount"])
+
 		var bill osMod.Bill = osMod.Bill{
 			LedgerName:      item["LedgerName"].(string),
 			LedgerGroupName: item["LedgerGroupName"].(string),
 			BillName:        item["Name"].(string),
+			OpeningAmount:   parseFloat64(item["OpeningAmount"]),
+			ClosingAmount:   amount,
 			DueDate:         dueDate,
 			BillDate:        billDate,
 			DelayDays:       days,
 		}
-		var amount = parseFloat64(item["Amount"])
 		var dueFilter = osMod.AllBills
 		if days > 0 && days <= int32(setting.OverDueDays) {
 			bill.DueAmount = amount
@@ -183,26 +186,41 @@ func GetOutstandingReport(res http.ResponseWriter, req *http.Request) {
 
 			var firstEntry = group[0]
 
+			var totalOpening float64 = 0
+			var totalClosing float64 = 0
 			var totalAmount float64 = 0
 			var totalDue float64 = 0
 			var totalOverDue float64 = 0
 
 			for _, bill := range group {
+				totalOpening += bill.OpeningAmount
+				totalClosing += bill.ClosingAmount
 				totalAmount += bill.Amount
 				totalDue += bill.DueAmount
 				totalOverDue += bill.OverDueAmount
 			}
 
+			var paidAmount = totalOpening - totalClosing
+			var percentPaid float64 = 0
+			if totalOpening > 0 {
+				percentPaid = (paidAmount / totalOpening) * 100
+			}
+			var percentPending = 100 - percentPaid
+
 			var partyBill osMod.Bill = osMod.Bill{
-				LedgerName:      firstEntry.LedgerName,
-				LedgerGroupName: firstEntry.LedgerGroupName,
-				BillName:        "",
-				DueDate:         "",
-				BillDate:        "",
-				DelayDays:       0,
-				Amount:          totalAmount,
-				DueAmount:       totalDue,
-				OverDueAmount:   totalOverDue,
+				LedgerName:        firstEntry.LedgerName,
+				LedgerGroupName:   firstEntry.LedgerGroupName,
+				BillName:          "",
+				DueDate:           "",
+				BillDate:          "",
+				DelayDays:         0,
+				OpeningAmount:     totalOpening,
+				ClosingAmount:     totalClosing,
+				Amount:            totalAmount,
+				DueAmount:         totalDue,
+				OverDueAmount:     totalOverDue,
+				PendingPercentage: percentPending,
+				PaidPercentage:    percentPaid,
 			}
 
 			partyBills = append(partyBills, partyBill)
