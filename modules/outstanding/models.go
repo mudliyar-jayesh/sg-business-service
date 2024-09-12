@@ -20,6 +20,15 @@ const (
 	OverDueBills
 )
 
+type LocationReportType string
+
+const (
+	StateWise    LocationReportType = "State"
+	RegionWise   LocationReportType = "Region"
+	DistrictWise LocationReportType = "District"
+	PincodeWise  LocationReportType = "Pincode"
+)
+
 type OsReportFilter struct {
 	PartyName    string
 	SearchText   string
@@ -31,6 +40,23 @@ type OsReportFilter struct {
 	SortKey      string
 	SortOrder    string
 	ReportOnType ReportType
+}
+
+type OsLocationFilter struct {
+	Filter       models.RequestFilter
+	State        string
+	Locations    []string
+	LocationType LocationReportType
+}
+
+type MetaBill struct {
+	BillNumber    string                  `bson:"Name"`
+	PartyName     string                  `bson:"LedgerName"`
+	ParentGroup   *string                 `bson:"LedgerGroupName"`
+	PendingAmount *models.FloatFromString `bson:"PendingAmount"`
+	OpeningAmount *models.FloatFromString `bson:"OpeningAmount"`
+	BillDate      *primitive.DateTime     `bson:"BillDate"`
+	DueDate       *primitive.DateTime     `bson:"DueDate"`
 }
 
 type Bill struct {

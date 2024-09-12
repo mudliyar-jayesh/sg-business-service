@@ -48,6 +48,8 @@ func main() {
 	http.Handle("/os/get/groups", corsMiddleware(http.HandlerFunc(endpoints.GetCachedGroups)))
 	http.Handle("/os/get/report", corsMiddleware(http.HandlerFunc(endpoints.GetOutstandingReport)))
 
+	http.Handle("/os/location/report", corsMiddleware(http.HandlerFunc(osEndpoints.GetLocationWiseOverview)))
+
 	// inventory endpoints
 	http.Handle("/stock-items/get/report", corsMiddleware(http.HandlerFunc(endpoints.GetStockItemReport)))
 	http.Handle("/stock-group/get/names", corsMiddleware(http.HandlerFunc(endpoints.GetItemGroupNames)))
@@ -58,10 +60,11 @@ func main() {
 	// collection endpoints
 	http.Handle("/collection/get", corsMiddleware(http.HandlerFunc(osEndpoints.GetCollectionOverview)))
 
-    // followup endpoints
+	// followup endpoints
 	http.Handle("/os/followup/sample", corsMiddleware(http.HandlerFunc(osEndpoints.SampleFollowUp)))
 	http.Handle("/os/followup/status", corsMiddleware(http.HandlerFunc(osEndpoints.GetBillStatusList)))
-    http.Handle("/os/followup/create", corsMiddleware(http.HandlerFunc(osEndpoints.CreateFollowUp)))
+	http.Handle("os/followup/create", corsMiddleware(http.HandlerFunc(osEndpoints.CreateFollowUp)))
+
 	// dsp endponts
 	http.Handle("/dsp/upload", corsMiddleware(http.HandlerFunc(dspEndpoints.UploadCsvFile)))
 
