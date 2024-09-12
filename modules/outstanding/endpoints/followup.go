@@ -31,14 +31,19 @@ func GetBills(res http.ResponseWriter, req *http.Request) {
 	headers, err := utils.ResolveHeaders(&req.Header)
 	if headers.HandleErrorOrIllegalValues(res, &err){return}
 
+	partyName := req.URL.Query().Get("partyName")
 	searchText := req.URL.Query().Get("searchText")
 
 	reqFilter := models.RequestFilter{Batch: models.Pagination{Apply: true, Limit: 25}}
 
-	var filter []bson.M = nil
+	var filter = []bson.M {
+		{
+			"LedgerName": partyName,
+		},
+	}
 
 	if len(searchText) > 0 {
-		filter = utils.GenerateSearchFilter(searchText, "Name")
+		filter = append(filter, utils.GenerateSearchFilter(searchText, "Name")[0])
 	}
 	
 	bills := osMod.GetBills(headers.CompanyId, reqFilter, true, filter)
