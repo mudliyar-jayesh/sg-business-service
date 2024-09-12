@@ -15,6 +15,9 @@ func SampleFollowUp(res http.ResponseWriter, req  *http.Request) {
 }
 
 func GetBillStatusList(res http.ResponseWriter, req *http.Request){
+	headers, err := utils.ResolveHeaders(&req.Header)
+	if headers.HandleErrorOrIllegalValues(res, &err){return}
+		
 	mappings := followups.GetFollowUpStatusMappings()
 	response := utils.NewResponseStruct(mappings, 1)
 	response.ToJson(res)
@@ -22,7 +25,6 @@ func GetBillStatusList(res http.ResponseWriter, req *http.Request){
 
 func CreateFollowUp(res http.ResponseWriter, req *http.Request){
 	headers, err := utils.ResolveHeaders(&req.Header)
-
 	if headers.HandleErrorOrIllegalValues(res, &err){return}
 		
 	if err != nil {
