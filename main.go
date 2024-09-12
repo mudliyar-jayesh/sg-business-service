@@ -48,6 +48,8 @@ func main() {
 	http.Handle("/os/get/groups", corsMiddleware(http.HandlerFunc(endpoints.GetCachedGroups)))
 	http.Handle("/os/get/report", corsMiddleware(http.HandlerFunc(endpoints.GetOutstandingReport)))
 
+	http.Handle("/os/location/report", corsMiddleware(http.HandlerFunc(osEndpoints.GetLocationWiseOverview)))
+
 	// inventory endpoints
 	http.Handle("/stock-items/get/report", corsMiddleware(http.HandlerFunc(endpoints.GetStockItemReport)))
 	http.Handle("/stock-group/get/names", corsMiddleware(http.HandlerFunc(endpoints.GetItemGroupNames)))
