@@ -116,7 +116,6 @@ func (handler *MongoHandler) FindDocuments(docFilter DocumentFilter) DocumentRes
 	}
 }
 
-
 func GetDocuments[T any](handler *MongoHandler, docFilter DocumentFilter) ([]T, error) {
 	findOptions := options.Find()
 	if docFilter.UsePagination {

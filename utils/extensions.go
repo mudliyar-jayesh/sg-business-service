@@ -1,11 +1,12 @@
 package utils
 
 import (
-    "strconv"
-    "fmt"
-    "errors"
-    "reflect"
-    "go.mongodb.org/mongo-driver/bson"
+	"errors"
+	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
+	"math"
+	"reflect"
+	"strconv"
 )
 
 func GroupByKey[T any](items []T, key string) map[string][]T {
@@ -45,18 +46,18 @@ func AggregateMultiFields[T any, R any](grouped map[string][]T, aggregationFuncs
 }
 
 func GroupBy(documents []bson.M, key string) map[string][]bson.M {
-    grouped := make(map[string][]bson.M)
+	grouped := make(map[string][]bson.M)
 
-    for _, doc := range documents {
-        field, exists := doc[key].(string)
-        if !exists {
-            fmt.Println("LedgerName field missing or not a string")
-            continue
-        }
-        grouped[field] = append(grouped[field], doc)
-    }
+	for _, doc := range documents {
+		field, exists := doc[key].(string)
+		if !exists {
+			fmt.Println("LedgerName field missing or not a string")
+			continue
+		}
+		grouped[field] = append(grouped[field], doc)
+	}
 
-    return grouped
+	return grouped
 }
 
 func Intersection(slice1, slice2 []string) []string {
@@ -82,35 +83,67 @@ func Intersection(slice1, slice2 []string) []string {
 }
 
 func ToDictionary(bsonSlice []bson.M, keyField string) (map[string]interface{}, error) {
-    dict := make(map[string]interface{})
+	dict := make(map[string]interface{})
 
-    for _, item := range bsonSlice {
-        key, ok := item[keyField].(string)
-        if !ok {
-            return nil, errors.New("invalid key string")
-        }
-        dict[key] = item
-    }
-    return dict, nil
+	for _, item := range bsonSlice {
+		key, ok := item[keyField].(string)
+		if !ok {
+			return nil, errors.New("invalid key string")
+		}
+		dict[key] = item
+	}
+	return dict, nil
 }
-
 
 func ParseFloat64(value interface{}) float64 {
-    var result float64
-    switch v := value.(type) {
-    case float64:
-        result = v
-    case int:
-        result = float64(v)
-    case string:
-        parsed, err := strconv.ParseFloat(v, 64)
-        if err != nil {
-            return 0 // Return default value on error
-        }
-        result = parsed
-    default:
-        return 0 // Return default value if type is not handled
-    }
-    return result
+	var result float64
+	switch v := value.(type) {
+	case float64:
+		result = v
+	case int:
+		result = float64(v)
+	case string:
+		parsed, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			return 0 // Return default value on error
+		}
+		result = parsed
+	default:
+		return 0 // Return default value if type is not handled
+	}
+	return result
+}
+func ProcessBatch[T any](values []T, chunkSize int, predicate func([]T)) {
+	var defaultChunkSize = 100
+	var dataLength = len(values)
+
+	var workingChuckSize int = chunkSize
+	if dataLength < chunkSize {
+		workingChuckSize = defaultChunkSize
+		if dataLength < defaultChunkSize {
+			workingChuckSize = dataLength
+		}
+	}
+
+	var chunkCount int = int(math.Ceil(float64(dataLength / workingChuckSize)))
+
+	for chunkNumber := 0; chunkNumber < chunkCount; chunkNumber++ {
+		var slice []T = getChunk(values, workingChuckSize, chunkNumber)
+		predicate(slice)
+	}
+
 }
 
+func getChunk[T any](list []T, chunkSize, chunkNumber int) []T {
+	startIndex := chunkNumber * chunkSize
+	if startIndex >= len(list) {
+		return nil
+	}
+
+	endIndex := startIndex + chunkSize
+	if endIndex > len(list) {
+		endIndex = len(list)
+	}
+
+	return list[startIndex:endIndex]
+}
