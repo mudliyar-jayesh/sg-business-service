@@ -82,6 +82,42 @@ func Intersection(slice1, slice2 []string) []string {
 	return result
 }
 
+func ToDict[T any, K comparable](items []T, keySelector func(T) K) map[K]T {
+	dict := make(map[K]T)
+	for _, item := range items {
+		key := keySelector(item)
+		dict[key] = item
+	}
+	return dict
+}
+
+func Select[S any, T any](source []S, selector func(S) T) []T {
+	result := make([]T, len(source))
+	for i, s := range source {
+		result[i] = selector(s)
+	}
+	return result
+}
+
+func GroupFor[S any, K comparable](source []S, keySelector func(S) K) map[K][]S {
+	result := make(map[K][]S)
+	for _, s := range source {
+		key := keySelector(s)
+		result[key] = append(result[key], s)
+	}
+	return result
+}
+
+func GroupBySelect[S any, K comparable, V any](source []S, keySelector func(S) K, elementSelector func(S) V) map[K][]V {
+	result := make(map[K][]V)
+	for _, s := range source {
+		key := keySelector(s)
+		value := elementSelector(s)
+		result[key] = append(result[key], value)
+	}
+	return result
+}
+
 func ToDictionary(bsonSlice []bson.M, keyField string) (map[string]interface{}, error) {
 	dict := make(map[string]interface{})
 
@@ -146,4 +182,34 @@ func getChunk[T any](list []T, chunkSize, chunkNumber int) []T {
 	}
 
 	return list[startIndex:endIndex]
+}
+
+func StringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
+// ToHashSet converts a slice of type T to a set (implemented as a map[T]struct{})
+// It ensures that all values in the returned map are unique.
+func ToHashSet[T comparable](items []T) map[T]struct{} {
+	set := make(map[T]struct{})
+	for _, item := range items {
+		set[item] = struct{}{} // Using struct{}{} to save memory
+	}
+	return set
+}
+func Distinct[T comparable](items []T) []T {
+	set := make(map[T]struct{})
+	var result []T
+	for _, item := range items {
+		if _, exists := set[item]; !exists {
+			set[item] = struct{}{}        // Mark the item as seen
+			result = append(result, item) // Add the distinct item to the result slice
+		}
+	}
+	return result
 }

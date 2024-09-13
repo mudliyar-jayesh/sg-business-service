@@ -2,7 +2,6 @@ package ledgers
 
 import (
 	"context"
-	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"sg-business-service/config"
 	"sg-business-service/handlers"
@@ -14,7 +13,7 @@ func getCollection() *handlers.MongoHandler {
 	return handlers.NewMongoHandler(collection)
 }
 
-func GetLedgers(companyId string, requestFilter models.RequestFilter, additionalFilter bson.M) []MetaLedger {
+func GetLedgers(companyId string, requestFilter models.RequestFilter, additionalFilter []bson.M) []MetaLedger {
 
 	var filter = bson.M{
 		"GUID": bson.M{
@@ -26,8 +25,6 @@ func GetLedgers(companyId string, requestFilter models.RequestFilter, additional
 		filter["$and"] = additionalFilter
 	}
 
-	fmt.Printf("filter %v", filter)
-
 	docFilter := handlers.DocumentFilter{
 		Ctx:           context.TODO(),
 		Filter:        filter,
@@ -35,14 +32,14 @@ func GetLedgers(companyId string, requestFilter models.RequestFilter, additional
 		Limit:         requestFilter.Batch.Limit,
 		Offset:        requestFilter.Batch.Offset,
 		Projection: bson.M{
-			"Name":  1,
-			"Group": 1,
-			/*"Address": 1,
+			"Name":    1,
+			"Group":   1,
+			"Address": 1,
 			"State":   1,
 			"PinCode": 1,
 			"Email":   1,
-			"EmailCc": 1, */
-			"_id": 0,
+			"EmailCc": 1,
+			"_id":     0,
 		},
 	}
 
@@ -63,7 +60,7 @@ func GetLedgersByPincodes(companyId string, requestFilter models.RequestFilter, 
 			},
 		}
 	}
-	return GetLedgers(companyId, requestFilter, collectionFilter)
+	return GetLedgers(companyId, requestFilter, []bson.M{collectionFilter})
 
 }
 
@@ -73,6 +70,5 @@ func GetLedgersByStates(companyId string, states []string, requestFilter models.
 			"$in": states,
 		},
 	}
-	return GetLedgers(companyId, requestFilter, collectionFilter)
-
+	return GetLedgers(companyId, requestFilter, []bson.M{collectionFilter})
 }

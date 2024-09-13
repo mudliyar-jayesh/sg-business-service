@@ -49,6 +49,12 @@ type OsLocationFilter struct {
 	LocationType LocationReportType
 }
 
+type LocationOverview struct {
+	LocationName  string
+	OpeningAmount float64
+	ClosingAmount float64
+}
+
 type MetaBill struct {
 	BillNumber    string                  `bson:"Name"`
 	PartyName     string                  `bson:"LedgerName"`
