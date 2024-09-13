@@ -68,13 +68,12 @@ func main() {
 
 	http.Handle("/os/get/bills", corsMiddleware(http.HandlerFunc(osEndpoints.GetBills)))
 
-
 	// GET request to get list of contact person
 	http.Handle("/party/get/contact-person", corsMiddleware(http.HandlerFunc(osEndpoints.GetContactPerson)))
 
-
 	// dsp endponts
 	http.Handle("/dsp/upload", corsMiddleware(http.HandlerFunc(dspEndpoints.UploadCsvFile)))
+	http.Handle("/dsp/get/states", corsMiddleware(http.HandlerFunc(dspEndpoints.GetStates)))
 
 	fmt.Println("Server starting on port 35001...")
 	log.Fatal(http.ListenAndServe(":35001", nil))

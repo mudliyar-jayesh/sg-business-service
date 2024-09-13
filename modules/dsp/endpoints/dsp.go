@@ -10,6 +10,12 @@ import (
 	"strings"
 )
 
+func GetStates(res http.ResponseWriter, req *http.Request) {
+	states := dsp.GetStates()
+	response := utils.NewResponseStruct(states, len(states))
+	response.ToJson(res)
+}
+
 func UploadCsvFile(res http.ResponseWriter, req *http.Request) {
 	body, err := utils.ReadRequestBody[models.File](req)
 	if err != nil {
