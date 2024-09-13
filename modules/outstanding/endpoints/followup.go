@@ -63,6 +63,22 @@ func GetContactPerson(res http.ResponseWriter, req *http.Request) {
 	response.ToJson(res)
 }
 
+func UpdateFollowUp(res http.ResponseWriter, req *http.Request) {
+	headers, err := utils.ResolveHeaders(&req.Header)
+	if headers.HandleErrorOrIllegalValues(res, &err) {return}
+
+	requestBody, err := utils.ReadRequestBody[followups.FollowUpCreationRequest](req)
+
+	if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			res.Write([]byte(fmt.Sprintf("Error while parsing request body %v", err)))
+			return
+		}
+
+	// TODO: change
+	followups.CreateFollowUp(requestBody.Followup, nil)
+}
+
 func CreateFollowUp(res http.ResponseWriter, req *http.Request){
 	headers, err := utils.ResolveHeaders(&req.Header)
 	if headers.HandleErrorOrIllegalValues(res, &err){return}
@@ -82,6 +98,7 @@ func CreateFollowUp(res http.ResponseWriter, req *http.Request){
 		}
 
 	requestBody.Followup.PersonInChargeId = headers.UserId
+	requestBody.Followup.CompanyId = headers.CompanyId
 
 	err = followups.CreateFollowUp(requestBody.Followup, &requestBody.PointOfContact)
 

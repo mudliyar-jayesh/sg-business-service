@@ -2,6 +2,7 @@ package followups
 
 import (
 	"fmt"
+	"time"
 )
 
 func GetContactPersons(companyId string, partyName string) ([] ContactPerson){
@@ -11,6 +12,24 @@ func GetContactPersons(companyId string, partyName string) ([] ContactPerson){
 
 func GetFollowUpList(companyId string, partyName string) []FollowUp{
 	return getFollowupListByParty(companyId, partyName)	
+}
+
+func UpdateFollowUp(fup FollowUp) error {
+	/***
+		Updates a followup entry
+	*/
+
+	// First check if the followup exists
+
+	// If all the bills are resolved then set the followup status to resolved.
+
+	// Update metadata
+	currentDt := time.Now()
+	fup.LastUpdated = &currentDt 
+
+	// Return the updated followup to user
+	_, err := insertFollowUpToDB(fup)	
+	return err
 }
 
 func CreateFollowUp(fup FollowUp, cperson *ContactPerson) error {
@@ -34,6 +53,10 @@ func CreateFollowUp(fup FollowUp, cperson *ContactPerson) error {
 	}
 
 	// before inserting any followup we check what are the previous followups for this
+
+	// Inject datetime metadata before sending to DB
+	created := time.Now()
+	fup.Created = &created 
 
 	// At final stage insert the  followup	
 	guid, err := insertFollowUpToDB(fup)
