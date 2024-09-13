@@ -1,6 +1,5 @@
-echo "Fetching the latest code from repo and building"
+echo "Fetching the latest code from repo" 
 git pull
-go build -o sg-biz-service
 
 echo "Setting go version in go.mod to 1.23"
 #!/bin/bash
@@ -24,6 +23,10 @@ if [[ "$new_content" != "$current_content" ]]; then
   echo "Updated go.mod to version 1.23"
 else
   echo "go.mod version is already 1.23"
+
+
+echo "Compiling..."
+go build -o sg-biz-service
 
 echo "Removed older binary"
 rm ../sg-biz-service
