@@ -1,31 +1,25 @@
+#!/bin/bash
+
 echo "Fetching the latest code from repo" 
 git pull
 
 echo "Setting go version in go.mod to 1.23"
 
-#!/bin/bash
-
-# Check if go.mod file exists
-if [[ ! -f go.mod ]]; then
-  echo "go.mod file not found."
-  exit 1
+# Check if go.mod exists
+if [ ! -f go.mod ]; then
+    echo "Error: go.mod file not found in the current directory."
+    exit 1
 fi
 
-# Read the current go.mod content
-current_content=$(cat go.mod)
+# Use sed to replace the Go version
+sed -i 's/^go \(1\.[0-9]\+\(\.[0-9]\+\)\?\)/go 1.23/' go.mod
 
-# Replace the version string
-new_content=$(echo "$current_content" | sed 's/go 1.\([0-9]\)/go 1.23/g')
-
-# Check if the content has changed
-if [[ "$new_content" != "$current_content" ]]; then
-  # Write the new content to go.mod
-  echo "$new_content" > go.mod
-  echo "Updated go.mod to version 1.23"
+# Check if the replacement was successful
+if grep -q "^go 1.23$" go.mod; then
+    echo "Go version successfully updated to 1.23 in go.mod"
 else
-  echo "go.mod version is already 1.23"
+    echo "Failed to update Go version. Please check the go.mod file manually."
 fi
-
 
 echo "Compiling..."
 go build -o sg-biz-service
