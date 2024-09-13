@@ -75,8 +75,7 @@ func UpdateFollowUp(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-	// TODO: change
-	followups.CreateFollowUp(requestBody.Followup, nil)
+	followups.UpdateFollowUp(requestBody.Followup)
 }
 
 func CreateFollowUp(res http.ResponseWriter, req *http.Request){

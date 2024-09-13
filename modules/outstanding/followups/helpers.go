@@ -50,6 +50,18 @@ func getFollowupListByParty (companyId, partyName string) []FollowUp{
 	return res
 }
 
+func updateFollowup(followup FollowUp) error {
+	mongoHandler :=getFollowupCollection()
+
+	filter := bson.M {
+		"FollowUpId":followup.FollowUpId, 
+	}
+
+	err := mongoHandler.ReplaceDocument(config.AppDb, config.FollowUp, filter, followup)
+
+	return err
+}
+
 func insertFollowUpToDB(followup FollowUp) (string, error) {
 	guid := uuid.New()
 	followup.FollowUpId = guid.String() 

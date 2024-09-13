@@ -19,8 +19,6 @@ func UpdateFollowUp(fup FollowUp) error {
 		Updates a followup entry
 	*/
 
-	// First check if the followup exists
-
 	// If all the bills are resolved then set the followup status to resolved.
 
 	// Update metadata
@@ -28,7 +26,7 @@ func UpdateFollowUp(fup FollowUp) error {
 	fup.LastUpdated = &currentDt 
 
 	// Return the updated followup to user
-	_, err := insertFollowUpToDB(fup)	
+	err := updateFollowup(fup)	
 	return err
 }
 

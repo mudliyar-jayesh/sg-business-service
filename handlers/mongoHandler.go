@@ -191,6 +191,19 @@ func (handler *MongoHandler) UpdateDocument(dbName string, collectionName string
 	}
 }
 
+func (handler *MongoHandler) ReplaceDocument(dbName string, collectionName string, filter bson.M, replacement interface{}) error {
+    // Select the database and collection
+    collection := Client.Database(dbName).Collection(collectionName)
+    
+    // Replace the document
+    _, err := collection.ReplaceOne(context.TODO(), filter, replacement)
+    if err != nil {
+        return err
+    }
+    
+    return nil
+}
+
 func (handler *MongoHandler) AggregatePipeline(dbName string, collectionName string, pipeline mongo.Pipeline) []bson.M {
 	// Select the database and collection
 	collection := Client.Database(dbName).Collection(collectionName)
