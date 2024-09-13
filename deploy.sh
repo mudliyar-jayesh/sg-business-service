@@ -37,4 +37,4 @@ echo "New binary moved to parent"
 cp sg-biz-service ../
 
 echo "Restarting the service"
-systemctl restart sg-biz-service
+systemctl restart sg-biz.service
