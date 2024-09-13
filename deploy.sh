@@ -23,7 +23,7 @@ if [[ "$new_content" != "$current_content" ]]; then
   echo "Updated go.mod to version 1.23"
 else
   echo "go.mod version is already 1.23"
-
+fi
 
 echo "Compiling..."
 go build -o sg-biz-service
