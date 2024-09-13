@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "Stashing the local changes"
+git stash
+
 echo "Fetching the latest code from repo" 
 git pull
 
