@@ -81,6 +81,16 @@ func Intersection(slice1, slice2 []string) []string {
 
 	return result
 }
+func ToLookup[T any, K comparable](items []T, keySelector func(T) K) map[K][]T {
+	dict := make(map[K][]T)
+	for _, item := range items {
+		key := keySelector(item)
+		var values = dict[key]
+		values = append(values, item)
+		dict[key] = values
+	}
+	return dict
+}
 
 func ToDict[T any, K comparable](items []T, keySelector func(T) K) map[K]T {
 	dict := make(map[K]T)
