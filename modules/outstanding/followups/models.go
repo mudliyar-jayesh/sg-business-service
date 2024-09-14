@@ -57,5 +57,5 @@ type FollowUpBill struct {
 // ---------- REQUEST MODELS -----------
 type FollowUpCreationRequest struct {
 	Followup FollowUp
-	PointOfContact ContactPerson
+	PointOfContact *ContactPerson
 }

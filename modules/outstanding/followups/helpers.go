@@ -50,6 +50,108 @@ func getFollowupListByParty (companyId, partyName string) []FollowUp{
 	return res
 }
 
+func getFollowupHistoryById (companyId, followUpId string) []FollowUp{
+
+	filter := handlers.DocumentFilter{UsePagination: false, Ctx: context.TODO(), Filter: bson.M{
+		"CompanyId": companyId,
+		"FollowUpId": followUpId,
+	}}
+
+	collection := getFollowupCollection()
+
+	var connectedFollowUps []FollowUp;
+
+	res, err := handlers.GetDocuments[FollowUp](collection, filter)
+
+	result := res[0]
+
+	// iterate until we have reached the first followup for this
+	for { 
+		if (result.RefPrevFollowUpId == nil || len(res) == 0) {break}
+
+		filter = handlers.DocumentFilter{UsePagination: false, Ctx: context.TODO(), Filter: bson.M{
+		"CompanyId": companyId,
+		"FollowUpId": result.RefPrevFollowUpId,
+		}}
+
+		res, err = handlers.GetDocuments[FollowUp](collection, filter)
+	
+		if len(res) > 0 {
+			result = res[0]
+			connectedFollowUps = append(connectedFollowUps, res[0])
+		} 
+	}
+
+	if err != nil || len(res) < 1{
+		return nil
+	}
+
+	return res
+}
+
+func getFollowupHistoryByBillId(companyId, billId string) []FollowUp{
+
+	filter := handlers.DocumentFilter{
+ 	   UsePagination: false,
+ 	   Ctx:           context.TODO(),
+ 	   Filter: bson.M{
+ 	       "CompanyId":       companyId,
+ 	       "FollowUpBills": bson.M{
+ 	           "$elemMatch": bson.M{
+ 	               "BillId": billId,
+ 	           },
+ 	       },
+ 	   },
+	}
+
+	collection := getFollowupCollection()
+
+	res, err := handlers.GetDocuments[FollowUp](collection, filter)
+
+	if err != nil || len(res) < 1{
+		return nil
+	}
+
+	return res
+}
+
+
+func getFollowupHistoryByContactPerson (companyId, contactPersonId string) []FollowUp{
+
+	filter := handlers.DocumentFilter{UsePagination: false, Ctx: context.TODO(), Filter: bson.M{
+		"CompanyId": companyId,
+		"ContactPersonId": contactPersonId,
+	}}
+
+	collection := getFollowupCollection()
+
+	res, err := handlers.GetDocuments[FollowUp](collection, filter)
+
+	if err != nil || len(res) < 1{
+		return nil
+	}
+
+	return res
+}
+
+func getFollowUpHistoryByPersonInCharge (companyId string, personInChargeId uint64) []FollowUp{
+
+	filter := handlers.DocumentFilter{UsePagination: false, Ctx: context.TODO(), Filter: bson.M{
+		"CompanyId": companyId,
+		"PersonInChargeId": personInChargeId,
+	}}
+
+	collection := getFollowupCollection()
+
+	res, err := handlers.GetDocuments[FollowUp](collection, filter)
+
+	if err != nil || len(res) < 1{
+		return nil
+	}
+
+	return res
+}
+
 func updateFollowup(followup FollowUp) error {
 	mongoHandler := getFollowupCollection()
 

@@ -16,6 +16,26 @@ func GetFollowUpList(companyID, partyName string) []FollowUp {
 	return getFollowupListByParty(companyID, partyName)
 }
 
+// GetFollowUpHistoryById retrieves all the connected followups
+func GetFollowUpHistoryById(companyID, followUpId string) []FollowUp {
+	return getFollowupHistoryById(companyID, followUpId)
+}
+
+// GetFollowUpHistoryByBill retrieves all the followups for a party bill 
+func GetFollowUpHistoryByBill(companyID, billId string) []FollowUp {
+	return getFollowupHistoryByBillId(companyID, billId)
+}
+
+// GetFollowUpHistoryByContactPerson retrieves all the followups for a contact person
+func GetFollowUpHistoryByContactPerson(companyID, contactPersonId string) []FollowUp {
+	return getFollowupHistoryByContactPerson(companyID, contactPersonId)
+}
+
+// GetFollowUpHistoryByPersonInCharge retrieves all the followups attented by a person in charge
+func GetFollowUpHistoryByPersonInCharge(companyID string, personInChargeId uint64) []FollowUp {
+	return getFollowUpHistoryByPersonInCharge(companyID, personInChargeId)
+}
+
 // UpdateFollowUp updates an existing follow-up entry.
 // It checks if all associated bills are resolved and updates the follow-up status accordingly.
 func UpdateFollowUp(fup FollowUp) error {

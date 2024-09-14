@@ -65,7 +65,12 @@ func main() {
 	http.Handle("/os/followup/status/get", corsMiddleware(http.HandlerFunc(osEndpoints.GetBillStatusList)))
 	http.Handle("/os/followup/create", corsMiddleware(http.HandlerFunc(osEndpoints.CreateFollowUp)))
 	http.Handle("/os/followup/update", corsMiddleware(http.HandlerFunc(osEndpoints.UpdateFollowUp)))
-	http.Handle("/os/followup/get", corsMiddleware(http.HandlerFunc(osEndpoints.GetFollowupList)))
+
+	http.Handle("/os/followup/get-by/party", corsMiddleware(http.HandlerFunc(osEndpoints.GetFollowupList)))
+	http.Handle("/os/followup/get-by/contact-person", corsMiddleware(http.HandlerFunc(osEndpoints.GetFollowUpForContactPerson)))
+	http.Handle("/os/followup/get-by/incharge", corsMiddleware(http.HandlerFunc(osEndpoints.GetFollowUpForContactPerson)))
+	http.Handle("/os/followup/get-by/bill", corsMiddleware(http.HandlerFunc(osEndpoints.GetFollowUpsForBill)))
+	http.Handle("/os/followup/get", corsMiddleware(http.HandlerFunc(osEndpoints.GetFollowUpHistory)))
 
 	http.Handle("/os/get/bills", corsMiddleware(http.HandlerFunc(osEndpoints.GetBills)))
 

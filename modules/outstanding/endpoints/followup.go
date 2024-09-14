@@ -7,6 +7,7 @@ import (
 	osMod "sg-business-service/modules/outstanding"
 	"sg-business-service/modules/outstanding/followups"
 	"sg-business-service/utils"
+	"strconv"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -105,7 +106,11 @@ func CreateFollowUp(res http.ResponseWriter, req *http.Request){
 	requestBody.Followup.PersonInChargeId = headers.UserId
 	requestBody.Followup.CompanyId = headers.CompanyId
 
-	err = followups.CreateFollowUp(requestBody.Followup, &requestBody.PointOfContact)
+	if (len(requestBody.Followup.ContactPersonId) > 0 && requestBody.PointOfContact != nil) {
+		requestBody.PointOfContact.CompanyId = headers.CompanyId
+	}
+
+	err = followups.CreateFollowUp(requestBody.Followup, requestBody.PointOfContact)
 
 	if err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
@@ -123,5 +128,54 @@ func GetFollowupList(res http.ResponseWriter,  req *http.Request){
 	partyFollowups := followups.GetFollowUpList(headers.CompanyId, partyName)
 
 	response := utils.NewResponseStruct(partyFollowups, len(partyFollowups))
+	response.ToJson(res)
+}
+
+func GetFollowUpForContactPerson(res http.ResponseWriter, req *http.Request) {
+	headers, err := utils.ResolveHeaders(&req.Header)
+	if headers.HandleErrorOrIllegalValues(res, &err){return}
+
+	id := req.URL.Query().Get("id")
+
+	personFollowups := followups.GetFollowUpHistoryByContactPerson(headers.CompanyId, id)
+
+	response := utils.NewResponseStruct(personFollowups, len(personFollowups))
+	response.ToJson(res)
+}
+
+
+func GetFollowUpForInCharge(res http.ResponseWriter, req *http.Request) {
+	headers, err := utils.ResolveHeaders(&req.Header)
+	if headers.HandleErrorOrIllegalValues(res, &err){return}
+
+	id, err := strconv.ParseUint(req.URL.Query().Get("id"), 10, 64)
+	
+	personFollowups := followups.GetFollowUpHistoryByPersonInCharge(headers.CompanyId, id)
+
+	response := utils.NewResponseStruct(personFollowups, len(personFollowups))
+	response.ToJson(res)
+}
+
+func GetFollowUpsForBill(res http.ResponseWriter, req *http.Request) {
+	headers, err := utils.ResolveHeaders(&req.Header)
+	if headers.HandleErrorOrIllegalValues(res, &err){return}
+
+	id := req.URL.Query().Get("id")
+	
+	personFollowups := followups.GetFollowUpHistoryByBill(headers.CompanyId, id)
+
+	response := utils.NewResponseStruct(personFollowups, len(personFollowups))
+	response.ToJson(res)
+}
+
+func GetFollowUpHistory(res http.ResponseWriter, req *http.Request) {
+	headers, err := utils.ResolveHeaders(&req.Header)
+	if headers.HandleErrorOrIllegalValues(res, &err){return}
+
+	id := req.URL.Query().Get("id")
+	
+	personFollowups := followups.GetFollowUpHistoryById(headers.CompanyId, id)
+
+	response := utils.NewResponseStruct(personFollowups, len(personFollowups))
 	response.ToJson(res)
 }
