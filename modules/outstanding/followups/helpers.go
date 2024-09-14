@@ -87,7 +87,7 @@ func getFollowupHistoryById (companyId, followUpId string) []FollowUp{
 		return nil
 	}
 
-	return res
+	return connectedFollowUps 
 }
 
 func getFollowupHistoryByBillId(companyId, billId string) []FollowUp{
