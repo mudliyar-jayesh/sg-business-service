@@ -196,10 +196,11 @@ func (handler *MongoHandler) ReplaceDocument(dbName string, collectionName strin
     collection := Client.Database(dbName).Collection(collectionName)
     
     // Replace the document
-    _, err := collection.ReplaceOne(context.TODO(), filter, replacement)
+   result, err := collection.ReplaceOne(context.TODO(), filter, replacement)
     if err != nil {
         return err
     }
+	fmt.Println("%v", result)
     
     return nil
 }

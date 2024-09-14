@@ -20,6 +20,18 @@ func UpdateFollowUp(fup FollowUp) error {
 	*/
 
 	// If all the bills are resolved then set the followup status to resolved.
+	allResolved := true 
+
+	for i := 0; i < len(fup.FollowUpBills); i++ {
+		if fup.FollowUpBills[i].Status != FollowUpStatus(Completed) {
+			allResolved = false
+			break
+		}
+	}
+
+	if allResolved {
+		fup.Status = FollowUpStatus(Completed)
+	}
 
 	// Update metadata
 	currentDt := time.Now()
@@ -55,6 +67,7 @@ func CreateFollowUp(fup FollowUp, cperson *ContactPerson) error {
 	// Inject datetime metadata before sending to DB
 	created := time.Now()
 	fup.Created = &created 
+	fup.LastUpdated = &created
 
 	// At final stage insert the  followup	
 	guid, err := insertFollowUpToDB(fup)

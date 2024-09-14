@@ -75,7 +75,13 @@ func UpdateFollowUp(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-	followups.UpdateFollowUp(requestBody.Followup)
+	err = followups.UpdateFollowUp(requestBody.Followup)
+
+	if err != nil {
+			res.WriteHeader(http.StatusExpectationFailed)
+			res.Write([]byte(fmt.Sprintf("Error while updatin %v", err)))
+			return
+		}
 }
 
 func CreateFollowUp(res http.ResponseWriter, req *http.Request){

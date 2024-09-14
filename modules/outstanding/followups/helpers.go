@@ -51,7 +51,7 @@ func getFollowupListByParty (companyId, partyName string) []FollowUp{
 }
 
 func updateFollowup(followup FollowUp) error {
-	mongoHandler :=getFollowupCollection()
+	mongoHandler := getFollowupCollection()
 
 	filter := bson.M {
 		"FollowUpId":followup.FollowUpId, 
