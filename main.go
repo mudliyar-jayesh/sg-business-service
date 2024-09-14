@@ -66,6 +66,10 @@ func main() {
 	http.Handle("/os/followup/create", corsMiddleware(http.HandlerFunc(osEndpoints.CreateFollowUp)))
 	http.Handle("/os/followup/get", corsMiddleware(http.HandlerFunc(osEndpoints.GetFollowupList)))
 
+	http.Handle("/os/followup/get/team-wise", corsMiddleware(http.HandlerFunc(osEndpoints.GetTeamFollowReport)))
+	http.Handle("/os/followup/get/party-wise", corsMiddleware(http.HandlerFunc(osEndpoints.GetPartyFollowUpReport)))
+	http.Handle("/os/followup/get/day-wise", corsMiddleware(http.HandlerFunc(osEndpoints.GetUpcomingFollowUpReport)))
+
 	http.Handle("/os/get/bills", corsMiddleware(http.HandlerFunc(osEndpoints.GetBills)))
 
 	// GET request to get list of contact person
