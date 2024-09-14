@@ -18,6 +18,9 @@ type ContactPerson struct {
 
 type FollowUp struct {
 	ID                *primitive.ObjectID `bson:"_id,omitempty"`
+	Created           *time.Time          `bson:"CreateDate"`
+	LastUpdated       *time.Time          `bson:"LastUpdated"`
+	CompanyId         string              `bson:"CompanyId"`
 	RefPrevFollowUpId *string             `bson:"RefPrevFollowUpId"`
 	FollowUpId        string              `bson:"FollowUpId"`
 	ContactPersonId   string              `bson:"ContactPersonId"`
@@ -66,6 +69,5 @@ type FollowUpBill struct {
 // ---------- REQUEST MODELS -----------
 type FollowUpCreationRequest struct {
 	Followup       FollowUp
-	PointOfContact ContactPerson
+	PointOfContact *ContactPerson
 }
-

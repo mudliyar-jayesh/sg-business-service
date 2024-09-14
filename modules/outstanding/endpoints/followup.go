@@ -2,16 +2,16 @@ package endpoints
 
 import (
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"sg-business-service/config"
 	"sg-business-service/models"
 	osMod "sg-business-service/modules/outstanding"
 	fuMod "sg-business-service/modules/outstanding/followups"
 	"sg-business-service/utils"
+	"strconv"
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func SampleFollowUp(res http.ResponseWriter, req *http.Request) {
@@ -71,6 +71,29 @@ func GetContactPerson(res http.ResponseWriter, req *http.Request) {
 	response.ToJson(res)
 }
 
+func UpdateFollowUp(res http.ResponseWriter, req *http.Request) {
+	headers, err := utils.ResolveHeaders(&req.Header)
+	if headers.HandleErrorOrIllegalValues(res, &err) {
+		return
+	}
+
+	requestBody, err := utils.ReadRequestBody[fuMod.FollowUpCreationRequest](req)
+
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		res.Write([]byte(fmt.Sprintf("Error while parsing request body %v", err)))
+		return
+	}
+
+	err = fuMod.UpdateFollowUp(requestBody.Followup)
+
+	if err != nil {
+		res.WriteHeader(http.StatusExpectationFailed)
+		res.Write([]byte(fmt.Sprintf("Error while updatin %v", err)))
+		return
+	}
+}
+
 func CreateFollowUp(res http.ResponseWriter, req *http.Request) {
 	headers, err := utils.ResolveHeaders(&req.Header)
 	if headers.HandleErrorOrIllegalValues(res, &err) {
@@ -92,8 +115,12 @@ func CreateFollowUp(res http.ResponseWriter, req *http.Request) {
 	}
 
 	requestBody.Followup.PersonInChargeId = headers.UserId
+	requestBody.Followup.CompanyId = headers.CompanyId
 
-	err = fuMod.CreateFollowUp(requestBody.Followup, &requestBody.PointOfContact)
+	err = fuMod.CreateFollowUp(requestBody.Followup, requestBody.PointOfContact)
+	if len(requestBody.Followup.ContactPersonId) == 0 && requestBody.PointOfContact != nil {
+		requestBody.PointOfContact.CompanyId = headers.CompanyId
+	}
 
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
@@ -271,5 +298,60 @@ func GetUpcomingFollowUpReport(res http.ResponseWriter, req *http.Request) {
 	var followups = fuMod.GetFollowups(headers.CompanyId, filter, nil)
 
 	response := utils.NewResponseStruct(followups, len(followups))
+	response.ToJson(res)
+}
+func GetFollowUpForContactPerson(res http.ResponseWriter, req *http.Request) {
+	headers, err := utils.ResolveHeaders(&req.Header)
+	if headers.HandleErrorOrIllegalValues(res, &err) {
+		return
+	}
+
+	id := req.URL.Query().Get("id")
+
+	personFollowups := fuMod.GetFollowUpHistoryByContactPerson(headers.CompanyId, id)
+
+	response := utils.NewResponseStruct(personFollowups, len(personFollowups))
+	response.ToJson(res)
+}
+
+func GetFollowUpForInCharge(res http.ResponseWriter, req *http.Request) {
+	headers, err := utils.ResolveHeaders(&req.Header)
+	if headers.HandleErrorOrIllegalValues(res, &err) {
+		return
+	}
+
+	id, err := strconv.ParseUint(req.URL.Query().Get("id"), 10, 64)
+
+	personFollowups := fuMod.GetFollowUpHistoryByPersonInCharge(headers.CompanyId, id)
+
+	response := utils.NewResponseStruct(personFollowups, len(personFollowups))
+	response.ToJson(res)
+}
+
+func GetFollowUpsForBill(res http.ResponseWriter, req *http.Request) {
+	headers, err := utils.ResolveHeaders(&req.Header)
+	if headers.HandleErrorOrIllegalValues(res, &err) {
+		return
+	}
+
+	id := req.URL.Query().Get("id")
+
+	personFollowups := fuMod.GetFollowUpHistoryByBill(headers.CompanyId, id)
+
+	response := utils.NewResponseStruct(personFollowups, len(personFollowups))
+	response.ToJson(res)
+}
+
+func GetFollowUpHistory(res http.ResponseWriter, req *http.Request) {
+	headers, err := utils.ResolveHeaders(&req.Header)
+	if headers.HandleErrorOrIllegalValues(res, &err) {
+		return
+	}
+
+	id := req.URL.Query().Get("id")
+
+	personFollowups := fuMod.GetFollowUpHistoryById(headers.CompanyId, id)
+
+	response := utils.NewResponseStruct(personFollowups, len(personFollowups))
 	response.ToJson(res)
 }
