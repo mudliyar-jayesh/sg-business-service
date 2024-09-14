@@ -106,7 +106,7 @@ func CreateFollowUp(res http.ResponseWriter, req *http.Request){
 	requestBody.Followup.PersonInChargeId = headers.UserId
 	requestBody.Followup.CompanyId = headers.CompanyId
 
-	if (len(requestBody.Followup.ContactPersonId) > 0 && requestBody.PointOfContact != nil) {
+	if (len(requestBody.Followup.ContactPersonId) == 0 && requestBody.PointOfContact != nil) {
 		requestBody.PointOfContact.CompanyId = headers.CompanyId
 	}
 
