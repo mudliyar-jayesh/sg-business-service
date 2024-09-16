@@ -90,7 +90,7 @@ func getFollowupHistoryById(companyId, followUpId string) []FollowUp {
 		return nil
 	}
 
-	return connectedFollowUps 
+	return connectedFollowUps
 }
 
 func getFollowupHistoryByBillId(companyId, billId string) []FollowUp {
@@ -188,6 +188,23 @@ func insertFollowUpToDB(followup FollowUp) (string, error) {
 func getContactCollection() *handlers.MongoHandler {
 	var collection = handlers.GetCollection(config.AppDb, config.ContactPerson)
 	return handlers.NewMongoHandler(collection)
+}
+
+func GetPocById(companyId, id string) *ContactPerson {
+	filter := handlers.DocumentFilter{UsePagination: false, Ctx: context.TODO(), Filter: bson.M{
+		"CompanyId": companyId,
+		"PersonId":  id,
+	}}
+
+	collection := getContactCollection()
+
+	res, err := handlers.GetDocuments[ContactPerson](collection, filter)
+
+	if err != nil || len(res) < 1 {
+		return nil
+	}
+
+	return &res[0]
 }
 
 func getContactPersonById(companyId, id string) *ContactPerson {

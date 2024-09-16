@@ -52,6 +52,23 @@ type FollowUpFilter struct {
 	StartDateStr string
 	EndDateStr   string
 }
+type FollowUpHistory struct {
+	PartyName        string
+	CreationDate     time.Time
+	UpdationDate     time.Time
+	NextFollowUpDate *time.Time
+	PersonInCharge   string
+	PersonInChargeId uint64
+	PocName          string
+	PocEmail         string
+	PocMobile        string
+	Description      string
+	FollowUpBills    []FollowUpBill
+	TotalCount       int32
+	PendingCount     int32
+	ScheduledCount   int32
+	CompleteCount    int32
+}
 
 type FollowUpOverview struct {
 	Name           string

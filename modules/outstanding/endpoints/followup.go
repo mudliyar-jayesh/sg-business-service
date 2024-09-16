@@ -188,7 +188,7 @@ func GetTeamFollowReport(res http.ResponseWriter, req *http.Request) {
 		}
 		overview := fuMod.FollowUpOverview{
 			Name:           userName,
-			TotalCount:     0,
+			TotalCount:     int32(len(values)),
 			PendingCount:   0,
 			ScheduledCount: 0,
 			CompleteCount:  0,
@@ -298,6 +298,15 @@ func GetUpcomingFollowUpReport(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	var url string = config.UmsUrl + "/users/company/" + headers.CompanyId
+	users := utils.GetFromUms[[]config.MetaUser](url, headers)
+	userById := utils.ToDict(*users, func(user config.MetaUser) uint64 {
+		return user.Id
+	})
+
+	var infoUrl string = fmt.Sprintf("%v/users/get?userId=%v", config.UmsUrl, headers.UserId)
+	currentUserInfo := utils.GetFromUms[config.MetaUser](infoUrl, headers)
+
 	filter := []bson.M{
 		{"CreateDate": bson.M{"$exists": true, "$ne": nil}},
 		{"CreateDate": bson.M{
@@ -306,9 +315,52 @@ func GetUpcomingFollowUpReport(res http.ResponseWriter, req *http.Request) {
 		}},
 	}
 
-	var followups = fuMod.GetFollowups(headers.CompanyId, filter, nil)
+	var followUps = fuMod.GetFollowups(headers.CompanyId, filter, nil)
 
-	response := utils.NewResponseStruct(followups, len(followups))
+	var followUpOverview []fuMod.FollowUpHistory
+	for _, entry := range followUps {
+		var overview = fuMod.FollowUpHistory{
+			PartyName:        entry.PartyName,
+			CreationDate:     *entry.Created,
+			UpdationDate:     *entry.LastUpdated,
+			NextFollowUpDate: entry.NextFollowUpDate,
+		}
+		var poc = fuMod.GetPocById(headers.CompanyId, entry.ContactPersonId)
+		if poc != nil {
+			overview.PocName = poc.Name
+			overview.PocMobile = poc.PhoneNo
+			overview.PocEmail = poc.Email
+		}
+		var personInChargeName string = "Other"
+		if entry.PersonInChargeId == headers.UserId {
+			personInChargeName = currentUserInfo.Name
+		} else {
+			userInfo, exists := userById[entry.PersonInChargeId]
+			if exists {
+				personInChargeName = userInfo.Name
+			}
+		}
+		overview.PersonInCharge = personInChargeName
+		overview.PersonInChargeId = entry.PersonInChargeId
+		overview.TotalCount = int32(len(entry.FollowUpBills))
+		overview.PendingCount = 0
+		overview.ScheduledCount = 0
+		overview.CompleteCount = 0
+		for _, bill := range entry.FollowUpBills {
+			if bill.Status == fuMod.Pending {
+				overview.PendingCount += 1
+
+			} else if bill.Status == fuMod.Scheduled {
+				overview.ScheduledCount += 1
+			} else {
+
+				overview.CompleteCount += 1
+			}
+		}
+		followUpOverview = append(followUpOverview, overview)
+	}
+
+	response := utils.NewResponseStruct(followUpOverview, len(followUpOverview))
 	response.ToJson(res)
 }
 func GetFollowUpForContactPerson(res http.ResponseWriter, req *http.Request) {
