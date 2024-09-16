@@ -36,19 +36,38 @@ func GetFollowUpHistoryByPersonInCharge(companyID string, personInChargeId uint6
 	return getFollowUpHistoryByPersonInCharge(companyID, personInChargeId)
 }
 
+// calibrateFollowupStatus: modifies the status of a Followup object based on the status of it's bills
+// 						   it will assign the status which is found in majority of the bills.
+func calibrateFollowupStatus(fup *FollowUp) {
+	statusCountMap := make(map[FollowUpStatus]int)
+
+	for _, bill := range fup.FollowUpBills {
+		if count, exists := statusCountMap[bill.Status]; exists {
+			statusCountMap[bill.Status] = count + 1
+		} else {
+			statusCountMap[bill.Status] = 1
+		}
+	}
+
+	var maxCountedStatus FollowUpStatus
+
+	maxCount := 0
+
+	for status, count := range statusCountMap {
+		if count > maxCount {
+			maxCount = count
+			maxCountedStatus = status
+		}
+	}
+
+	fup.Status = maxCountedStatus 
+}
+
 // UpdateFollowUp updates an existing follow-up entry.
 // It checks if all associated bills are resolved and updates the follow-up status accordingly.
 func UpdateFollowUp(fup FollowUp) error {
-	allResolved := true
-	for _, bill := range fup.FollowUpBills {
-		if bill.Status != Completed {
-			allResolved = false
-			break
-		}
-	}
-	if allResolved {
-		fup.Status = Completed
-	}
+
+	calibrateFollowupStatus(&fup)
 
 	currentDt := time.Now()
 	fup.LastUpdated = &currentDt
@@ -72,6 +91,8 @@ func CreateFollowUp(fup FollowUp, cperson *ContactPerson) error {
 	created := time.Now()
 	fup.Created = &created
 	fup.LastUpdated = &created
+
+	calibrateFollowupStatus(&fup)
 
 	guid, err := insertFollowUpToDB(fup)
 	if err != nil {
