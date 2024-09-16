@@ -315,7 +315,7 @@ func GetUpcomingFollowUpReport(res http.ResponseWriter, req *http.Request) {
 		}},
 	}
 
-	var followUps = fuMod.GetFollowups(headers.CompanyId, filter, nil)
+	var followUps = fuMod.GetFollowups(headers.CompanyId, filter, &body.Filter)
 
 	var followUpOverview []fuMod.FollowUpHistory
 	for _, entry := range followUps {

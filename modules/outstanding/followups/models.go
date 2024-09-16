@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"sg-business-service/models"
 )
 
 type ContactPerson struct {
@@ -51,6 +52,7 @@ func GetFollowUpStatusMappings() map[string]int {
 type FollowUpFilter struct {
 	StartDateStr string
 	EndDateStr   string
+	Filter       models.RequestFilter
 }
 type FollowUpHistory struct {
 	PartyName        string
