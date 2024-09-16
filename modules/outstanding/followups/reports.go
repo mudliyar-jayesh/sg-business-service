@@ -37,7 +37,8 @@ func GetFollowUpHistoryByPersonInCharge(companyID string, personInChargeId uint6
 }
 
 // calibrateFollowupStatus: modifies the status of a Followup object based on the status of it's bills
-// 						   it will assign the status which is found in majority of the bills.
+//
+//	it will assign the status which is found in majority of the bills.
 func calibrateFollowupStatus(fup *FollowUp) {
 	statusCountMap := make(map[FollowUpStatus]int)
 
@@ -60,7 +61,7 @@ func calibrateFollowupStatus(fup *FollowUp) {
 		}
 	}
 
-	fup.Status = maxCountedStatus 
+	fup.Status = maxCountedStatus
 }
 
 // UpdateFollowUp updates an existing follow-up entry.

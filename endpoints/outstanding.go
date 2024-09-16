@@ -31,8 +31,6 @@ func SearchLedgers(res http.ResponseWriter, req *http.Request) {
 	var page int64 = 25
 	var usePagination = true
 	if len(searchKey) > 0 {
-		page = 0
-		usePagination = false
 		filter["$and"] = utils.GenerateSearchFilter(searchKey, "Name")
 	}
 
