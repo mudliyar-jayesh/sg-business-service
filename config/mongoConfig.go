@@ -10,16 +10,16 @@ const (
 )
 
 const (
-    ContactPerson string = "ContactPerson"
-    FollowUp 	string = "FollowUp"
-	Bill        string = "Bills"
-	DSP         string = "DSP"
-	Ledger      string = "Ledgers"
-	LedgerGroup string = "Groups"
-	Voucher     string = "Vouchers"
-	Item        string = "StockItems"
-	ItemGroup   string = "StockGroups"
-	SyncInfo    string = "LastSyncInfo"
+	ContactPerson string = "ContactPerson"
+	FollowUp      string = "FollowUp"
+	Bill          string = "Bills"
+	DSP           string = "DSP"
+	Ledger        string = "Ledgers"
+	LedgerGroup   string = "Groups"
+	Voucher       string = "Vouchers"
+	Item          string = "StockItems"
+	ItemGroup     string = "StockGroups"
+	SyncInfo      string = "LastSyncInfo"
 )
 
 type MongoConfig struct {
@@ -30,6 +30,10 @@ func LoadMongoConfig() *MongoConfig {
 	return &MongoConfig{
 		Uri: getEnv("SG_MONGO", "mongodb://softgen:QWAmTnsdBUaTL2z@118.139.167.125:27017/"),
 	}
+}
+
+func LoadEmailTemplate() string {
+	return getEnv("SG_Template", "")
 }
 
 func getEnv(key, defaultValue string) string {

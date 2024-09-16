@@ -3,6 +3,7 @@ package reminders
 import (
 	"context"
 	"fmt"
+	"sg-business-service/config"
 	"sg-business-service/handlers"
 	"sg-business-service/models"
 	ledgersMod "sg-business-service/modules/ledgers"
@@ -133,7 +134,8 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
 			Bills:       bills,
 		}
 		//emailBody := handlers.WriteToTemplate("C:\\Users\\softg\\Projects\\sg-business-service\\osTemplate.html", content)
-		emailBody := handlers.WriteToTemplate("/home/jayesh/development/Softgen/sg-business-service/osTemplate.html", content)
+		var templatePath = config.LoadEmailTemplate()
+		emailBody := handlers.WriteToTemplate(templatePath, content)
 		emailSetting := setting.EmailSetting
 
 		var emailSettings = models.EmailSettings{
