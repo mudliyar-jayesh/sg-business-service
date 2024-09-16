@@ -117,14 +117,25 @@ func CreateFollowUp(res http.ResponseWriter, req *http.Request) {
 	requestBody.Followup.PersonInChargeId = headers.UserId
 	requestBody.Followup.CompanyId = headers.CompanyId
 
-	err = fuMod.CreateFollowUp(requestBody.Followup, requestBody.PointOfContact)
-	if len(requestBody.Followup.ContactPersonId) == 0 && requestBody.PointOfContact != nil {
+	// insert contact person
+	var pocId string
+	var pocErr error
+	if len(requestBody.PointOfContact.PersonId) > 0 {
+		pocId = requestBody.PointOfContact.PersonId
+	} else {
 		requestBody.PointOfContact.CompanyId = headers.CompanyId
+		pocId, pocErr = fuMod.CreatePoc(*requestBody.PointOfContact)
+		if pocErr != nil {
+			http.Error(res, "Could not create contact person", http.StatusBadRequest)
+			return
+		}
 	}
 
+	// insert follow up
+	requestBody.Followup.ContactPersonId = pocId
+	_, err = fuMod.CreateNewFollowUp(requestBody.Followup)
 	if err != nil {
-		res.WriteHeader(http.StatusInternalServerError)
-		res.Write([]byte(fmt.Sprintf("Error while creating followup %v", err)))
+		http.Error(res, "Could not create Follow up", http.StatusBadRequest)
 		return
 	}
 }
