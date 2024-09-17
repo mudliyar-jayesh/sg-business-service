@@ -111,3 +111,11 @@ const (
 func (r ReminderInterval) String() string {
 	return [...]string{"Daily", "Weekly", "Monthly", "DayWise"}[r-1]
 }
+
+type PartyOverview struct {
+	PartyName    string
+	BillNumber   string
+	TotalBills   int32
+	TotalOpening float64
+	TotalClosing float64
+}

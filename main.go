@@ -50,6 +50,7 @@ func main() {
 	http.Handle("/os/get/report", corsMiddleware(http.HandlerFunc(endpoints.GetOutstandingReport)))
 
 	http.Handle("/os/location/report", corsMiddleware(http.HandlerFunc(osEndpoints.GetLocationWiseOverview)))
+	http.Handle("/os/get/party-overview", corsMiddleware(http.HandlerFunc(osEndpoints.GetPartySummary)))
 
 	// inventory endpoints
 	http.Handle("/stock-items/get/report", corsMiddleware(http.HandlerFunc(endpoints.GetStockItemReport)))
