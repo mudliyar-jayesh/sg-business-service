@@ -38,6 +38,7 @@ func GetPartySummary(res http.ResponseWriter, req *http.Request) {
 		}
 
 		for _, bill := range bills {
+
 			if bill.OpeningAmount != nil {
 				overview.TotalOpening += bill.OpeningAmount.Value
 			}

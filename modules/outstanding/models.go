@@ -59,7 +59,7 @@ type MetaBill struct {
 	BillNumber    string                  `bson:"Name"`
 	PartyName     string                  `bson:"LedgerName"`
 	ParentGroup   *string                 `bson:"LedgerGroupName"`
-	PendingAmount *models.FloatFromString `bson:"PendingAmount"`
+	PendingAmount *models.FloatFromString `bson:"Amount"`
 	OpeningAmount *models.FloatFromString `bson:"OpeningAmount"`
 	BillDate      *primitive.DateTime     `bson:"BillDate"`
 	DueDate       *primitive.DateTime     `bson:"DueDate"`
