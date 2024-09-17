@@ -241,7 +241,7 @@ func GetPartyFollowUpReport(res http.ResponseWriter, req *http.Request) {
 	for partyName, values := range followUpByPartyName {
 		overview := fuMod.FollowUpOverview{
 			Name:           partyName,
-			TotalCount:     0,
+			TotalCount:     int32(len(values)),
 			PendingCount:   0,
 			ScheduledCount: 0,
 			CompleteCount:  0,
