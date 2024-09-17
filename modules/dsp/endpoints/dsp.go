@@ -10,6 +10,26 @@ import (
 	"strings"
 )
 
+func SearchStates(res http.ResponseWriter, req *http.Request) {
+	searchKey := req.URL.Query().Get("searchKey")
+	states := dsp.GetStates()
+
+	if len(searchKey) > 0 {
+		var result []string
+		keyword := strings.ToLower(searchKey) // Convert the keyword to lowercase for case-insensitive comparison
+
+		for _, state := range states {
+			if strings.Contains(strings.ToLower(state), keyword) {
+				result = append(result, state)
+			}
+		}
+		states = result
+	}
+
+	response := utils.NewResponseStruct(states, len(states))
+	response.ToJson(res)
+}
+
 func GetStates(res http.ResponseWriter, req *http.Request) {
 	states := dsp.GetStates()
 	response := utils.NewResponseStruct(states, len(states))

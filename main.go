@@ -85,7 +85,7 @@ func main() {
 
 	// dsp endponts
 	http.Handle("/dsp/upload", corsMiddleware(http.HandlerFunc(dspEndpoints.UploadCsvFile)))
-	http.Handle("/dsp/get/states", corsMiddleware(http.HandlerFunc(dspEndpoints.GetStates)))
+	http.Handle("/dsp/get/states", corsMiddleware(http.HandlerFunc(dspEndpoints.SearchStates)))
 
 	fmt.Println("Server starting on port 35001...")
 	log.Fatal(http.ListenAndServe(":35001", nil))
