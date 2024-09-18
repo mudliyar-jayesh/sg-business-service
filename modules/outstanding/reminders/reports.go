@@ -14,9 +14,12 @@ import (
 	"sg-business-service/utils"
 	"time"
 
+	"github.com/leekchan/accounting"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+var ac = accounting.Accounting {Symbol: "₹", Precision: 2} 
 
 func SendEmailReminder(companyId string, ledgerNames []string) error {
 	ledgers := ledgersMod.GetLedgerByNames(companyId, ledgerNames)
@@ -79,19 +82,21 @@ func SendEmailReminder(companyId string, ledgerNames []string) error {
 		var bills []osMod.Bill
 		var totalAmount float64 = 0
 		istLocation, _ := time.LoadLocation("Asia/Kolkata")
+
+		layout := "02 January 2006"
+
 		for _, item := range billResponse.Data {
 			billDateValue := item["BillDate"].(primitive.DateTime).Time()
-			billDate := billDateValue.In(istLocation).Format("2006-01-02 15:04:05")
+			billDate := billDateValue.In(istLocation).Format(layout)
 
 			var dueDate string
 			dueDateValue := item["DueDate"]
 			if dueDateValue == nil {
 				dueDate = billDate
 			} else {
-				dueDate = dueDateValue.(primitive.DateTime).Time().In(istLocation).Format("2006-01-02 15:04:05")
+				dueDate = dueDateValue.(primitive.DateTime).Time().In(istLocation).Format(layout)
 			}
 
-			layout := "2006-01-02 15:04:05"
 			parsedTime, _ := time.Parse(layout, dueDate)
 			today := time.Now().UTC()
 
@@ -125,6 +130,7 @@ func SendEmailReminder(companyId string, ledgerNames []string) error {
 
 			var amount = utils.ParseFloat64(item["Amount"])
 			bill.Amount = amount
+			bill.AmountStr = ac.FormatMoney(bill.Amount)
 			totalAmount += amount
 			bills = append(bills, bill)
 		}

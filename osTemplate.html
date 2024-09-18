@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -44,11 +45,14 @@
             margin: 20px 0;
         }
 
-        table, th, td {
+        table,
+        th,
+        td {
             border: 1px solid #ddd;
         }
 
-        th, td {
+        th,
+        td {
             padding: 12px;
             text-align: left;
         }
@@ -74,15 +78,16 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>Outstanding Balance Notification</h1>
         <p>To {{.PartyName}},</p>
         <p>Address: {{.Address}}</p>
-        <p>This is a reminder that you have an outstanding balance  with us. Please review the details below:</p>
+        <p>This is a reminder that you have an outstanding balance with us. Please review the details below:</p>
 
         <p>Total Outstanding
-        <span class="amount"></span>
+            <span class="amount"></span>
         </p>
 
         <div class="table-container">
@@ -100,7 +105,7 @@
                     {{range .Bills}}
                     <tr>
                         <td>{{.BillName}}</td>
-                        <td class="amount">{{.Amount}}</td>
+                        <td class="amount">{{.AmountStr}}</td>
                         <td class="amount">{{.DelayDays}}</td>
                         <td class="date">{{.BillDate}}</td>
                         <td class="date">{{.DueDate}}</td>
@@ -133,7 +138,7 @@
         }
 
         // Apply date formatting to all elements with the class 'date'
-        document.querySelectorAll('.date').forEach(function(element) {
+        document.querySelectorAll('.date').forEach(function (element) {
             var dateStr = element.textContent;
             element.textContent = formatDate(dateStr);
         });
@@ -144,12 +149,13 @@
         }
 
         // Apply formatting to all elements with the class 'amount'
-        document.querySelectorAll('.amount').forEach(function(element) {
+        document.querySelectorAll('.amount').forEach(function (element) {
             var amount = parseFloat(element.textContent.replace(/₹|,/g, ''));
             if (!isNaN(amount)) {
                 element.textContent = formatCurrency(amount);
             }
         });
-    </script></body>
-</html>
+    </script>
+</body>
 
+</html>

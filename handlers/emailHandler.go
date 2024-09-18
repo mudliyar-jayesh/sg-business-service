@@ -42,10 +42,10 @@ func SendEmail(config models.EmailSettings) error {
     fmt.Println("Before Send")
     err := smtp.SendMail(config.SmtpServer + ":" + config.SmtpPort, auth, from, allRecipients, []byte(message))
     fmt.Println("After Send")
-    if err != nil {
+    if err != nil{
         fmt.Println("Error in send %v", err)
         return err
-    }
+    } 
     return nil
 }
 
