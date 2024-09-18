@@ -143,7 +143,7 @@ func SendLedgerEmail(res http.ResponseWriter, req *http.Request) {
 	err = reminders.SendEmailReminder(companyId, parties.Parties)
 
 	if err != nil {
-		fmt.Println("%v", err)
+		fmt.Println("Error occured: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		res.Write([]byte(err.Error()))
 	}

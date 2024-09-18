@@ -37,17 +37,16 @@ func SendEmail(config models.EmailSettings) error {
     }
     message += "\r\n" + config.Body
 
-    allRecipients :=append(config.To, append(config.Cc, config.Bcc...)...)
+    allRecipients := append(config.To, append(config.Cc, config.Bcc...)...)
 
     fmt.Println("Before Send")
     err := smtp.SendMail(config.SmtpServer + ":" + config.SmtpPort, auth, from, allRecipients, []byte(message))
     fmt.Println("After Send")
     if err != nil {
-        fmt.Println("Error in send ")
+        fmt.Println("Error in send %v", err)
         return err
     }
     return nil
-
 }
 
 func WriteToTemplate(templatePath string, data interface{}) string {
