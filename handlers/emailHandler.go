@@ -1,12 +1,12 @@
 package handlers
 
 import (
-    "bytes"
-    "html/template"
-    "net/smtp"
-    "strings"
-    "sg-business-service/models"
-    "fmt"
+	"bytes"
+	"fmt"
+	"html/template"
+	"net/smtp"
+	"sg-business-service/models"
+	"strings"
 )
 
 func SendEmail(config models.EmailSettings) error {

@@ -140,7 +140,13 @@ func SendLedgerEmail(res http.ResponseWriter, req *http.Request) {
 		fmt.Println("Error parsing the list of ledgerNames")
 	}
 
-	reminders.SendEmailReminder(companyId, parties.Parties)
+	err = reminders.SendEmailReminder(companyId, parties.Parties)
+
+	if err != nil {
+		fmt.Println("%v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		res.Write([]byte(err.Error()))
+	}
 }
 
 type EmailRequest struct {

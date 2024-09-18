@@ -2,7 +2,9 @@ package reminders
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 	"sg-business-service/config"
 	"sg-business-service/handlers"
 	"sg-business-service/models"
@@ -16,18 +18,18 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func SendEmailReminder(companyId string, ledgerNames []string) {
+func SendEmailReminder(companyId string, ledgerNames []string) error {
 	ledgers := ledgersMod.GetLedgerByNames(companyId, ledgerNames)
 	ledgerByName, err := utils.ToDictionary(ledgers, "Name")
 	if err != nil {
-		return
+		return err	
 	}
 
 	// Get Outstanding settings from Database for this company
 	settingData, settingErr := configMod.GetAllSettings(companyId)
 	if settingData == nil || len(settingData) > 1 {
 		fmt.Println(settingErr)
-		return
+		return err
 	}
 	setting := settingData[0]
 
@@ -134,7 +136,15 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
 			Bills:       bills,
 		}
 		//emailBody := handlers.WriteToTemplate("C:\\Users\\softg\\Projects\\sg-business-service\\osTemplate.html", content)
-		var templatePath = config.LoadEmailTemplate()
+		var templatePath string = config.LoadEmailTemplate()
+
+		_, err := os.Stat(templatePath)
+
+		if errors.Is(err, os.ErrNotExist) {
+			fmt.Println("%s path does not exists", templatePath)	
+			return err
+		}
+
 		emailBody := handlers.WriteToTemplate(templatePath, content)
 		emailSetting := setting.EmailSetting
 
@@ -150,10 +160,11 @@ func SendEmailReminder(companyId string, ledgerNames []string) {
 
 		fmt.Printf("settings: \n", emailSettings.To)
 		// send email
-		err := handlers.SendEmail(emailSettings)
+		err = handlers.SendEmail(emailSettings)
 		if err != nil {
 			fmt.Println("Failed to send email:", err)
+			return err
 		}
 	}
-
+	return nil
 }
