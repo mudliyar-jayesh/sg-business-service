@@ -5,8 +5,9 @@ import (
 )
 
 const (
-	AppDb   string = "BMRM"
-	TallyDb string = "NewTallyDesktopSync"
+	AppDb     string = "BMRM"
+	TallyDb   string = "NewTallyDesktopSync"
+	SummaryDb string = "Summary"
 )
 
 const (
@@ -20,6 +21,7 @@ const (
 	Item          string = "StockItems"
 	ItemGroup     string = "StockGroups"
 	SyncInfo      string = "LastSyncInfo"
+	OsSummary     string = "OutstandingSummary"
 )
 
 type MongoConfig struct {
