@@ -66,26 +66,26 @@ type MetaBill struct {
 }
 
 type Bill struct {
-	LedgerName        string
-	LedgerGroupName   string
-	BillName          string
-	BillDate          string
-	DueDate           string
-	DelayDays         int32
+	LedgerName      string
+	LedgerGroupName string
+	BillName        string
+	BillDate        string
+	DueDate         string
+	DelayDays       int32
 
-	OpeningAmount     float64
-	ClosingAmount     float64
-	Amount            float64
-	DueAmount         float64
-	OverDueAmount     float64
+	OpeningAmount float64
+	ClosingAmount float64
+	Amount        float64
+	DueAmount     float64
+	OverDueAmount float64
 
 	PendingPercentage float64
 	PaidPercentage    float64
 
-	AmountStr         string 
-	OpeningAmountStr  string
-	ClosingAmountStr  string
-	OverDueAmountStr  string
+	AmountStr        string
+	OpeningAmountStr string
+	ClosingAmountStr string
+	OverDueAmountStr string
 }
 
 type OsShareSettings struct {

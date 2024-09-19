@@ -19,25 +19,24 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-var ac = accounting.Accounting {Symbol: "₹", Precision: 2} 
+var ac = accounting.Accounting{Symbol: "₹", Precision: 2}
 
 func SendEmailReminder(companyId string, ledgerNames []string) error {
-	ledgers := ledgersMod.GetLedgerByNames(companyId, ledgerNames)
-	ledgerByName, err := utils.ToDictionary(ledgers, "Name")
-	if err != nil {
-		return err	
-	}
+	ledgers := ledgersMod.GetByNames(companyId, ledgerNames)
+	ledgerByName := utils.ToDict(ledgers, func(ledger ledgersMod.MetaLedger) string {
+		return ledger.Name
+	})
 
 	// Get Outstanding settings from Database for this company
 	settingData, settingErr := configMod.GetAllSettings(companyId)
 	if settingData == nil || len(settingData) > 1 {
 		fmt.Println(settingErr)
-		return err
+		return settingErr
 	}
 	setting := settingData[0]
 
-	for key, _ := range ledgerByName {
-
+	for key, ledger := range ledgerByName {
+		fmt.Println("address ", ledger.Address)
 		collectionFilter := bson.M{
 			"CompanyId":  companyId,
 			"LedgerName": key,
@@ -136,18 +135,20 @@ func SendEmailReminder(companyId string, ledgerNames []string) error {
 		}
 
 		content := ReminderBody{
-			PartyName:   key,
-			Address:     "",
-			TotalAmount: totalAmount,
-			Bills:       bills,
+			PartyName:      key,
+			Address:        "",
+			TotalAmount:    totalAmount,
+			TotalAmountStr: ac.FormatMoney(totalAmount),
+			Bills:          bills,
 		}
+
 		//emailBody := handlers.WriteToTemplate("C:\\Users\\softg\\Projects\\sg-business-service\\osTemplate.html", content)
 		var templatePath string = config.LoadEmailTemplate()
 
 		_, err := os.Stat(templatePath)
 
 		if errors.Is(err, os.ErrNotExist) {
-			fmt.Println("%s path does not exists", templatePath)	
+			fmt.Println("%s path does not exists", templatePath)
 			return err
 		}
 

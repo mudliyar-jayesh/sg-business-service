@@ -86,32 +86,35 @@
         <p>Address: {{.Address}}</p>
         <p>This is a reminder that you have an outstanding balance with us. Please review the details below:</p>
 
-        <p>Total Outstanding
-            <span class="amount"></span>
-        </p>
-
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
+                        <th>Bill Date</th>
                         <th>Bill Number</th>
                         <th>Bill Amount</th>
-                        <th>Delay Days</th>
-                        <th>Bill Date</th>
                         <th>Due Date</th>
+                        <th>Delay Days</th>
                     </tr>
                 </thead>
                 <tbody>
                     {{range .Bills}}
                     <tr>
+                        <td class="date">{{.BillDate}}</td>
                         <td>{{.BillName}}</td>
                         <td class="amount">{{.AmountStr}}</td>
-                        <td class="amount">{{.DelayDays}}</td>
-                        <td class="date">{{.BillDate}}</td>
                         <td class="date">{{.DueDate}}</td>
+                        <td class="amount">{{.DelayDays}}</td>
                     </tr>
                     {{end}}
                 </tbody>
+                <tfoot>
+                        <td></td>
+                        <td>Total</td>
+                        <td class="amount">{{.TotalAmountStr}}</td>
+                        <td></td>
+                        <td></td>
+                </tfoot>
             </table>
         </div>
 

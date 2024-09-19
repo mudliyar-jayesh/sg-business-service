@@ -5,11 +5,9 @@ import (
 )
 
 type ReminderBody struct {
-    PartyName string
-    Address string
-    TotalAmount float64
-    Bills []osMod.Bill
+	PartyName      string
+	Address        string
+	TotalAmount    float64
+	TotalAmountStr string
+	Bills          []osMod.Bill
 }
-
-
-
