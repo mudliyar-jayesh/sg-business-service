@@ -11,17 +11,18 @@ const (
 )
 
 const (
-	ContactPerson string = "ContactPerson"
-	FollowUp      string = "FollowUp"
-	Bill          string = "Bills"
-	DSP           string = "DSP"
-	Ledger        string = "Ledgers"
-	LedgerGroup   string = "Groups"
-	Voucher       string = "Vouchers"
-	Item          string = "StockItems"
-	ItemGroup     string = "StockGroups"
-	SyncInfo      string = "LastSyncInfo"
-	OsSummary     string = "OutstandingSummary"
+	ContactPerson         string = "ContactPerson"
+	FollowUp              string = "FollowUp"
+	Bill                  string = "Bills"
+	DSP                   string = "DSP"
+	Ledger                string = "Ledgers"
+	LedgerGroup           string = "Groups"
+	Voucher               string = "Vouchers"
+	Item                  string = "StockItems"
+	ItemGroup             string = "StockGroups"
+	SyncInfo              string = "LastSyncInfo"
+	OsSummary             string = "OutstandingSummary"
+	CollectionActionables string = "CollectionActionables"
 )
 
 type MongoConfig struct {

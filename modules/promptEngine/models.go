@@ -1,6 +1,7 @@
 package promptEngine
 
 import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"sg-business-service/models"
 	"time"
 )
@@ -19,12 +20,30 @@ type PromptRequest struct {
 	Filter       models.RequestFilter
 }
 
+type DecisionRequest struct {
+	ActionCode      string
+	ApplyOnAllBills bool
+	PartyName       *string
+	BillNumber      *string
+	AmountStr       *string
+}
+
+type ActionableOverview struct {
+	AssignedToName string
+	CreatedByName  string
+	StatusName     string
+	Task           Actionable
+}
 type Actionable struct {
-	Title       string
-	Description string
-	CreatedBy   uint64
-	CreatedOn   time.Time
-	Status      ActionableStatus
+	ID          primitive.ObjectID `bson:"_id,omitempty"`
+	Guid        string             `bson:"guid"`
+	CompanyId   string             `bson:"company_id"`
+	Title       string             `bson:"title"`
+	Description string             `bson:"description"`
+	AssignedTo  int64              `bson:"assigned_to"`
+	CreatedBy   int64              `bson:"created_by"`
+	CreatedOn   time.Time          `bson:"created_on"`
+	Status      ActionableStatus   `bson:"status"`
 }
 
 type Action struct {
@@ -37,4 +56,7 @@ type UserPrompt struct {
 	Suggestion     string
 	SummaryProfile string
 	Actions        []Action
+	PartyName      *string
+	BillNumber     *string
+	AmountStr      *string
 }

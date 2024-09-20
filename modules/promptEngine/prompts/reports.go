@@ -15,14 +15,19 @@ import (
 
 var ac = accounting.Accounting{Symbol: "₹", Precision: 2}
 
+const (
+	SendReminderAction string = "send_reminder"
+	TeamFollowUpAction string = "team_follow_up"
+)
+
 var CollectionActions = []promptEngine.Action{
 	{
 		Title: "Send Reminder",
-		Code:  "send_reminder",
+		Code:  SendReminderAction,
 	},
 	{
 		Title: "Notify Team To Follow-Up",
-		Code:  "team_follow_up",
+		Code:  TeamFollowUpAction,
 	},
 	{
 		Title: "Ignore",
@@ -30,7 +35,7 @@ var CollectionActions = []promptEngine.Action{
 	},
 }
 
-func GetCollectionPrompt(companyId, fromDate, toDate string, requestFilter models.RequestFilter) []promptEngine.UserPrompt {
+func GetCollectionPrompt(companyId, fromDate, toDate string, requestFilter models.RequestFilter, partyWise bool) []promptEngine.UserPrompt {
 	startDate, err := time.Parse("02-01-2006", fromDate)
 	if err != nil {
 		return make([]promptEngine.UserPrompt, 0)
@@ -62,12 +67,14 @@ func GetCollectionPrompt(companyId, fromDate, toDate string, requestFilter model
 			summaryStr += message
 		}
 
+		var totalAmount float64
 		for _, bill := range partyBills {
 			// TODO: later add the prediction call and check
 			var amount = bill.OpeningAmount.Value
 			if bill.PendingAmount != nil {
 				amount = bill.PendingAmount.Value
 			}
+			totalAmount += amount
 			var amountStr = ac.FormatMoney(amount)
 
 			var dueDate = bill.BillDate.Time()
@@ -82,16 +89,32 @@ func GetCollectionPrompt(companyId, fromDate, toDate string, requestFilter model
 			// Get the difference in days
 			days := int32(diff.Hours() / 24)
 
-			var promptMessage = fmt.Sprintf("%v has pending amount of %v", partyName, amountStr)
+			var promptMessage = fmt.Sprintf("%v has pending amount of %v on bill number: %v ", partyName, amountStr, bill.BillNumber)
 			if days > 0 {
 				var delayMessage = fmt.Sprintf(" with a delay of %v days", days)
 				promptMessage += delayMessage
 			}
-
+			if !partyWise {
+				var userPrompt = promptEngine.UserPrompt{
+					Message:        promptMessage,
+					SummaryProfile: summaryStr,
+					Actions:        CollectionActions,
+					PartyName:      &partyName,
+					BillNumber:     &bill.BillNumber,
+					AmountStr:      &amountStr,
+				}
+				prompts = append(prompts, userPrompt)
+			}
+		}
+		if partyWise {
+			var totalAmountStr = ac.FormatMoney(totalAmount)
+			var promptMessage = fmt.Sprintf("%v has pending amount of %v", partyName, totalAmountStr)
 			var userPrompt = promptEngine.UserPrompt{
 				Message:        promptMessage,
 				SummaryProfile: summaryStr,
 				Actions:        CollectionActions,
+				PartyName:      &partyName,
+				AmountStr:      &totalAmountStr,
 			}
 			prompts = append(prompts, userPrompt)
 		}
