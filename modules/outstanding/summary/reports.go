@@ -1,12 +1,33 @@
 package summary
 
 import (
+	"context"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"sg-business-service/handlers"
 	"sg-business-service/models"
 	osMod "sg-business-service/modules/outstanding"
 	"sg-business-service/utils"
 	"time"
 )
+
+func GetSummaryByPartyName(companyId, partyName string) []OutstandingSummary {
+	var handler = GetCollection()
+
+	docFilter := handlers.DocumentFilter{
+		Ctx:           context.TODO(),
+		UsePagination: false,
+		Filter: bson.M{
+			"client_id":   companyId,
+			"ledger_name": partyName,
+		},
+	}
+	summaries, err := handlers.GetDocuments[OutstandingSummary](handler, docFilter)
+	if err != nil {
+		return make([]OutstandingSummary, 0)
+	}
+	return summaries
+}
 
 // Function to fetch MetaBills and group by LedgerName
 func CalculateOutstandingSummary(companyId string) {

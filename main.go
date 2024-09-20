@@ -9,6 +9,7 @@ import (
 	"sg-business-service/handlers"
 	dspEndpoints "sg-business-service/modules/dsp/endpoints"
 	osEndpoints "sg-business-service/modules/outstanding/endpoints"
+	prompts "sg-business-service/modules/promptEngine/endpoints"
 )
 
 func corsMiddleware(next http.Handler) http.Handler {
@@ -89,6 +90,9 @@ func main() {
 
 	// os summary
 	http.Handle("/os-summary/calculate", corsMiddleware(http.HandlerFunc(osEndpoints.CalculuateSummary)))
+
+	// prompts
+	http.Handle("/prompts/get/collection", corsMiddleware(http.HandlerFunc(prompts.GetCollectionPrompts)))
 
 	fmt.Println("Server starting on port 35001...")
 	log.Fatal(http.ListenAndServe(":35001", nil))
