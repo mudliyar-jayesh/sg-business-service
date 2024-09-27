@@ -3,6 +3,7 @@ package overview
 import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
+	"log"
 	"sg-business-service/config"
 	"sg-business-service/handlers"
 	"sg-business-service/utils"
@@ -47,8 +48,8 @@ func getBills(companyId string, filter OverviewFilter, additionalFilter *[]bson.
 			"LedgerGroupName": 1,
 			"BillDate":        "$BillDate.Date",
 			"DueDate":         "$BillCreditPeriod.DueDate",
-			"Amount":          "$ClosingBal.Amount",
-			"OpeningAmount":   "$OpeningBal.Amount",
+			"ClosingBalance":  "$ClosingBal.Amount",
+			"OpeningBalance":  "$OpeningBal.Amount",
 			"IsAdvance":       "$IsAdvance.Value",
 			"_id":             0,
 		},
@@ -62,6 +63,7 @@ func getBills(companyId string, filter OverviewFilter, additionalFilter *[]bson.
 	var handler = getCollection()
 	bills, err := handlers.GetDocuments[Bill](handler, docFilter)
 	if err != nil {
+		log.Fatal(err)
 		return make([]Bill, 0)
 	}
 	return bills

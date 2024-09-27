@@ -11,6 +11,8 @@ import (
 	"math"
 	"sync"
 	"time"
+
+	"log"
 )
 
 const (
@@ -29,11 +31,13 @@ const (
 )
 
 func GetPartyWiseOverview(companyId string, filter OverviewFilter) []OutstandingOverview {
+
 	// Ledger Groups Filter
 	var groups = getParentGroups(companyId, filter.IsDebit)
 	if len(filter.Groups) > 0 {
 		groups = utils.Intersection(groups, filter.Groups)
 	}
+	filter.Groups = groups
 
 	var laterSortKeys = make([]string, 4)
 	laterSortKeys[0] = OpeningWise
@@ -42,6 +46,7 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 	laterSortKeys[3] = OverDueWise
 
 	var usePagination bool = !utils.ContainsString(laterSortKeys, filter.Filter.SortKey)
+	log.Printf("\n [!] Use Pagination  :: %v  \n", usePagination)
 
 	var ledgerFilter = models.RequestFilter{}
 	ledgerFilter.Batch.Apply = usePagination
@@ -59,7 +64,9 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 	default:
 		sortKey = "Name"
 	}
+
 	ledgerFilter.SortKey = sortKey
+	ledgerFilter.SortOrder = filter.Filter.SortOrder
 
 	var ledgerAdditionalFilter = []bson.M{
 		{
@@ -79,6 +86,7 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 
 	// Search Filter
 	var useLedgerSearch = filter.Filter.SearchKey == "party-wise" || filter.Filter.SearchKey == "group-wise"
+	log.Printf("\n [!] Use Ledger Search  :: %v  \n", useLedgerSearch)
 	if len(filter.Filter.SearchText) > 0 && useLedgerSearch {
 		var searchKey string
 		switch filter.Filter.SearchKey {
@@ -96,8 +104,11 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 		ledgerAdditionalFilter = append(ledgerAdditionalFilter, bson.M{
 			"$and": &searchFilter,
 		})
+		log.Printf("\n [!] Search Added:: %v  \n", useLedgerSearch)
 	}
+
 	var parties = ledgers.GetLedgers(companyId, ledgerFilter, ledgerAdditionalFilter)
+	log.Printf("\n [+] Parties Found :: %v  \n", len(parties))
 
 	var partyByName = utils.ToDict(parties, func(party ledgers.MetaLedger) string {
 		return party.Name
@@ -120,6 +131,7 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 		var partyNames = utils.Select(partyChunk, func(party ledgers.MetaLedger) string {
 			return party.Name
 		})
+		log.Printf("\n [+] Parties Names :: %v  \n", len(partyNames))
 
 		billFilter := []bson.M{
 			{
@@ -128,8 +140,31 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 				},
 			},
 		}
-		var bills = getBills(companyId, filter, &billFilter)
 
+		var billDbFilter = filter
+		billDbFilter.Filter.SortKey = "Name"
+		var bills = getBills(companyId, billDbFilter, &billFilter)
+		log.Printf("\n [+] Bills  :: %v  \n", len(bills))
+
+		if len(bills) < 1 {
+			mutex.Lock()
+			for _, partyName := range partyNames {
+				partyInfo := partyByName[partyName]
+				var overview = OutstandingOverview{
+					PartyName:     partyName,
+					LedgerGroup:   partyInfo.Group,
+					CreditDays:    partyInfo.CreditPeriod,
+					OpeningAmount: 0,
+					ClosingAmount: 0,
+					DueAmount:     0,
+					OverDueAmount: 0,
+				}
+				partySummary[partyName] = make([]OutstandingOverview, 1)
+				partySummary[partyName][0] = overview
+
+			}
+			mutex.Unlock()
+		}
 		today := time.Now().UTC()
 		for _, bill := range bills {
 			var overview = OutstandingOverview{
@@ -153,6 +188,7 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 			overview.BillDate = &billDate
 			overview.DueDate = &dueDate
 			overview.DelayDays = &days
+			overview.IsAdvance = bill.IsAdvance
 
 			if days >= 0 && days <= uint16(setting.OverDueDays) {
 				overview.DueAmount = overview.ClosingAmount
@@ -177,6 +213,7 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 	var wg sync.WaitGroup
 
 	for batchNumber := 0; batchNumber < int(batchCount); batchNumber++ {
+		wg.Add(1)
 		var startIndex = int(batchSize) * batchNumber
 		var endIndex = startIndex + int(batchSize)
 		var partyChunk = parties[startIndex:endIndex]
@@ -184,6 +221,7 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 	}
 	wg.Wait()
 
+	log.Printf("\n [+] Parties Summarized :: %v  \n", len(partySummary))
 	var outstandingOverview []OutstandingOverview
 	for partyName, bills := range partySummary {
 		party, exists := partyByName[partyName]
@@ -194,7 +232,7 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 		var overview = OutstandingOverview{
 			PartyName:          party.Name,
 			LedgerGroup:        party.Group,
-			CreditLimit:        &party.CreditLimit.Value,
+			CreditLimit:        party.CreditLimit,
 			CreditDays:         party.CreditPeriod,
 			OpeningAmount:      0,
 			ClosingAmount:      0,
@@ -207,6 +245,13 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 
 		for _, bill := range bills {
 			overview.OpeningAmount += bill.OpeningAmount
+			if filter.DeductAdvancePayment && bill.IsAdvance != nil && *bill.IsAdvance {
+				overview.ClosingAmount -= bill.ClosingAmount
+				overview.DueAmount -= bill.DueAmount
+				overview.OverDueAmount -= bill.OverDueAmount
+				continue
+			}
+
 			overview.ClosingAmount += bill.ClosingAmount
 			overview.DueAmount += bill.DueAmount
 			overview.OverDueAmount += bill.OverDueAmount
@@ -244,6 +289,8 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 
 		outstandingOverview = utils.Paginate(outstandingOverview, int(filter.Filter.Batch.Limit), int(filter.Filter.Batch.Offset))
 	}
+	log.Printf("\n [+] Party Overviews :: %v  \n", len(outstandingOverview))
+	log.Println("-------------------------------------------------------")
 	// sorting by keys
 	return outstandingOverview
 }

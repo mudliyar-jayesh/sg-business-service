@@ -36,7 +36,7 @@ type Bill struct {
 type OutstandingOverview struct {
 	PartyName          string
 	LedgerGroup        string
-	CreditLimit        *float64
+	CreditLimit        *string
 	CreditDays         *string
 	TotalBills         int
 	BillDate           *time.Time
@@ -48,4 +48,5 @@ type OutstandingOverview struct {
 	OverDueAmount      float64
 	ReceivedPercentage *float64
 	PendingPercentage  *float64
+	IsAdvance          *bool
 }

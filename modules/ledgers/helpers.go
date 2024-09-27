@@ -3,9 +3,11 @@ package ledgers
 import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
+	"log"
 	"sg-business-service/config"
 	"sg-business-service/handlers"
 	"sg-business-service/models"
+	"sg-business-service/utils"
 )
 
 func getCollection() *handlers.MongoHandler {
@@ -43,11 +45,22 @@ func GetLedgers(companyId string, requestFilter models.RequestFilter, additional
 			"CreditLimit":  1,
 			"_id":          0,
 		},
+		Sorting: bson.D{
+			{
+				Key:   requestFilter.SortKey,
+				Value: utils.GetValueBySortOrder(requestFilter.SortOrder),
+			},
+		},
+	}
+
+	if len(requestFilter.SortKey) < 1 {
+		docFilter.Sorting[0].Key = "Name"
 	}
 
 	var handler = getCollection()
 	ledgers, err := handlers.GetDocuments[MetaLedger](handler, docFilter)
 	if err != nil {
+		log.Fatal(err)
 		return make([]MetaLedger, 0)
 	}
 	return ledgers
