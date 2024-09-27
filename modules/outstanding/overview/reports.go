@@ -131,7 +131,6 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 		var partyNames = utils.Select(partyChunk, func(party ledgers.MetaLedger) string {
 			return party.Name
 		})
-		log.Printf("\n [+] Parties Names :: %v  \n", len(partyNames))
 
 		billFilter := []bson.M{
 			{
@@ -144,7 +143,6 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 		var billDbFilter = filter
 		billDbFilter.Filter.SortKey = "Name"
 		var bills = getBills(companyId, billDbFilter, &billFilter)
-		log.Printf("\n [+] Bills  :: %v  \n", len(bills))
 
 		if len(bills) < 1 {
 			mutex.Lock()
@@ -154,6 +152,7 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 					PartyName:     partyName,
 					LedgerGroup:   partyInfo.Group,
 					CreditDays:    partyInfo.CreditPeriod,
+					CreditLimit:   partyInfo.CreditLimit,
 					OpeningAmount: 0,
 					ClosingAmount: 0,
 					DueAmount:     0,
