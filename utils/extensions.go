@@ -4,9 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
+	"log"
 	"math"
 	"reflect"
+	"sort"
 	"strconv"
+	"time"
 )
 
 func GroupByKey[T any](items []T, key string) map[string][]T {
@@ -222,4 +225,100 @@ func Distinct[T comparable](items []T) []T {
 		}
 	}
 	return result
+}
+func ContainsString(slice []string, value string) bool {
+	for _, v := range slice {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}
+
+func SortBy[T any](slice []T, lessFunc func(i, j T) bool) {
+	sort.Slice(slice, func(i, j int) bool {
+		return lessFunc(slice[i], slice[j])
+	})
+}
+
+// SortByField sorts a slice of structs by a specific field name, either in ascending or descending order.
+func SortByField(slice interface{}, fieldName string, sortByAsc bool) {
+	// Get the value of the slice
+	v := reflect.ValueOf(slice)
+
+	// Check if the passed interface is a slice
+	if v.Kind() != reflect.Slice {
+		log.Fatalf("SortByField: expected a slice, got %T", slice)
+	}
+
+	// Get the element type of the slice
+	elemType := v.Type().Elem()
+
+	// Ensure the elements of the slice are structs
+	if elemType.Kind() != reflect.Struct {
+		log.Fatalf("SortByField: expected a slice of structs, got a slice of %s", elemType.Kind())
+	}
+
+	// Sort the slice using the sort.Slice function
+	sort.Slice(slice, func(i, j int) bool {
+		// Get the i-th and j-th elements of the slice
+		vi := v.Index(i)
+		vj := v.Index(j)
+
+		// Get the values of the specified field for the i-th and j-th elements
+		fieldI := vi.FieldByName(fieldName)
+		fieldJ := vj.FieldByName(fieldName)
+
+		// Check if the field exists
+		if !fieldI.IsValid() || !fieldJ.IsValid() {
+			log.Fatalf("SortByField: field %s not found in struct %s", fieldName, elemType.Name())
+		}
+
+		// Compare the field values based on their kind
+		var result bool
+		switch fieldI.Kind() {
+		case reflect.Int:
+			result = fieldI.Int() < fieldJ.Int()
+		case reflect.String:
+			result = fieldI.String() < fieldJ.String()
+		case reflect.Float64:
+			result = fieldI.Float() < fieldJ.Float()
+		case reflect.Bool:
+			result = fieldI.Bool() && !fieldJ.Bool()
+		case reflect.Struct:
+			// Handle time.Time comparison
+			if fieldI.Type() == reflect.TypeOf(time.Time{}) {
+				timeI := fieldI.Interface().(time.Time)
+				timeJ := fieldJ.Interface().(time.Time)
+				result = timeI.Before(timeJ) // Sort in ascending order (oldest first)
+			} else {
+				log.Fatalf("SortByField: unsupported struct type %s", fieldI.Type())
+			}
+		default:
+			log.Fatalf("SortByField: unsupported field type %s", fieldI.Kind())
+		}
+
+		// If sortByAsc is false, reverse the result for descending order
+		if !sortByAsc {
+			return !result
+		}
+		return result
+	})
+}
+
+func Paginate[T any](slice []T, limit, offset int) []T {
+	// Check bounds to avoid slicing out of range
+	if offset > len(slice) {
+		return []T{} // Return empty slice if offset exceeds slice length
+	}
+
+	end := offset + limit
+
+	// Ensure the end index does not exceed the slice length
+	if end > len(slice) {
+		end = len(slice)
+	}
+
+	// Return the sub-slice
+	return slice[offset:end]
 }

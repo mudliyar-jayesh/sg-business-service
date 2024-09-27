@@ -46,6 +46,8 @@ func main() {
 	http.Handle("/os-setting/get", corsMiddleware(http.HandlerFunc(endpoints.GetSetting)))
 
 	// outstanding endpoints
+	http.Handle("/os/overview", corsMiddleware(http.HandlerFunc(osEndpoints.GetPartyOverview)))
+
 	http.Handle("/os/search/ledgers", corsMiddleware(http.HandlerFunc(endpoints.SearchLedgers)))
 	http.Handle("/os/get/groups", corsMiddleware(http.HandlerFunc(endpoints.GetCachedGroups)))
 	http.Handle("/os/get/report", corsMiddleware(http.HandlerFunc(endpoints.GetOutstandingReport)))
@@ -102,3 +104,13 @@ func main() {
 	fmt.Println("Server starting on port 35001...")
 	log.Fatal(http.ListenAndServe(":35001", nil))
 }
+
+/*
+TODO: Handle Optional Is Advance
+TODO: Credit Days in Party Outstanding
+TODO: partyWise Rating
+TODO: Reference Number
+TODO: Sales Order Number and Sales ORder Date
+TODO: Exclude Parties while Sending The Email Reminder
+TODO: Public View Of Bills
+*/
