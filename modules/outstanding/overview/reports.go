@@ -164,6 +164,7 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 		for _, bill := range bills {
 			var overview = OutstandingOverview{
 				PartyName:     bill.LedgerName,
+				BillNumber:    &bill.BillNumber,
 				LedgerGroup:   *bill.LedgerGroupName,
 				OpeningAmount: bill.OpeningBalance.Value,
 				ClosingAmount: bill.ClosingBalance.Value,
@@ -385,6 +386,7 @@ func GetBillWiseOverview(companyId string, filter OverviewFilter) []OutstandingO
 			LedgerGroup:   *bill.LedgerGroupName,
 			OpeningAmount: bill.OpeningBalance.Value,
 			ClosingAmount: bill.ClosingBalance.Value,
+			BillNumber:    &bill.BillNumber,
 			DueAmount:     0,
 			OverDueAmount: 0,
 		}

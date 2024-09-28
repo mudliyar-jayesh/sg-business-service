@@ -39,6 +39,7 @@ type OutstandingOverview struct {
 	CreditLimit        *string
 	CreditDays         *string
 	TotalBills         int
+	BillNumber         *string
 	BillDate           *time.Time
 	DueDate            *time.Time
 	DelayDays          *uint16
