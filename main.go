@@ -104,6 +104,7 @@ func main() {
 
 	// templates
 	http.Handle("/template/os/create", corsMiddleware(http.HandlerFunc(osEndpoints.CreateOsTemplates)))
+	http.Handle("/template/os/update", corsMiddleware(http.HandlerFunc(osEndpoints.UpdateOsTemplate)))
 	http.Handle("/template/os/get/all", corsMiddleware(http.HandlerFunc(osEndpoints.GetAllOsTemplates)))
 	http.Handle("/template/os/get", corsMiddleware(http.HandlerFunc(osEndpoints.GetOsTemplatesByName)))
 

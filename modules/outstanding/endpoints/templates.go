@@ -20,6 +20,19 @@ func CreateOsTemplates(res http.ResponseWriter, req *http.Request) {
 
 }
 
+func UpdateOsTemplate(res http.ResponseWriter, req *http.Request) {
+	companyId := req.Header.Get("CompanyId")
+
+	newTemplate, err := utils.ReadRequestBody[reminders.OutstandingTemplate](req)
+	newTemplate.CompanyId = companyId
+	if err != nil {
+		http.Error(res, "Unable to read request body", http.StatusBadRequest)
+		return
+	}
+	reminders.UpdateByName(*newTemplate)
+
+}
+
 func GetAllOsTemplates(res http.ResponseWriter, req *http.Request) {
 	companyId := req.Header.Get("CompanyId")
 	templates := reminders.Get(companyId)

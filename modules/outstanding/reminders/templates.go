@@ -33,6 +33,15 @@ func GetByTemplateName(companyId, templateName string) *OutstandingTemplate {
 	return &templates[0]
 }
 
+func UpdateByName(template OutstandingTemplate) {
+	collection := GetTemplateCollection()
+	filter := bson.M{
+		"company_id":    template.CompanyId,
+		"template_name": template.TemplateName,
+	}
+	collection.ReplaceDocument(config.AppDb, config.OsTemplate, filter, template)
+}
+
 func Get(companyId string) []OutstandingTemplate {
 	docFilter := handlers.DocumentFilter{
 		Ctx:           context.TODO(),
