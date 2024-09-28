@@ -47,6 +47,7 @@ func main() {
 
 	// outstanding endpoints
 	http.Handle("/os/overview", corsMiddleware(http.HandlerFunc(osEndpoints.GetPartyOverview)))
+	http.Handle("/os/bill-overview", corsMiddleware(http.HandlerFunc(osEndpoints.GetBillOverview)))
 
 	http.Handle("/os/search/ledgers", corsMiddleware(http.HandlerFunc(endpoints.SearchLedgers)))
 	http.Handle("/os/get/groups", corsMiddleware(http.HandlerFunc(endpoints.GetCachedGroups)))

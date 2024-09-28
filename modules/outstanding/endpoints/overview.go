@@ -20,3 +20,18 @@ func GetPartyOverview(res http.ResponseWriter, req *http.Request) {
 	response := utils.NewResponseStruct(partyOverview, len(partyOverview))
 	response.ToJson(res)
 }
+
+func GetBillOverview(res http.ResponseWriter, req *http.Request) {
+	companyId := req.Header.Get("CompanyId")
+
+	reqBody, err := utils.ReadRequestBody[overview.OverviewFilter](req)
+	if err != nil {
+		http.Error(res, "Unable to read request body", http.StatusBadRequest)
+		return
+	}
+
+	var billOverview = overview.GetBillWiseOverview(companyId, *reqBody)
+
+	response := utils.NewResponseStruct(billOverview, len(billOverview))
+	response.ToJson(res)
+}

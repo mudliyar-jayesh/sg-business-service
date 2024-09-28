@@ -8,11 +8,10 @@ import (
 	osSettingMod "sg-business-service/modules/outstanding/settings"
 	"sg-business-service/utils"
 
+	"log"
 	"math"
 	"sync"
 	"time"
-
-	"log"
 )
 
 const (
@@ -28,6 +27,7 @@ const (
 	DueWise        string = "due-wise"
 	OverDueWise    string = "over-due-wise"
 	TotalBillsWise string = "bill-count-wise"
+	DelayWise      string = "delay-days-wise"
 )
 
 func GetPartyWiseOverview(companyId string, filter OverviewFilter) []OutstandingOverview {
@@ -46,7 +46,6 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 	laterSortKeys[3] = OverDueWise
 
 	var usePagination bool = !utils.ContainsString(laterSortKeys, filter.Filter.SortKey)
-	log.Printf("\n [!] Use Pagination  :: %v  \n", usePagination)
 
 	var ledgerFilter = models.RequestFilter{}
 	ledgerFilter.Batch.Apply = usePagination
@@ -86,7 +85,6 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 
 	// Search Filter
 	var useLedgerSearch = filter.Filter.SearchKey == "party-wise" || filter.Filter.SearchKey == "group-wise"
-	log.Printf("\n [!] Use Ledger Search  :: %v  \n", useLedgerSearch)
 	if len(filter.Filter.SearchText) > 0 && useLedgerSearch {
 		var searchKey string
 		switch filter.Filter.SearchKey {
@@ -104,11 +102,9 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 		ledgerAdditionalFilter = append(ledgerAdditionalFilter, bson.M{
 			"$and": &searchFilter,
 		})
-		log.Printf("\n [!] Search Added:: %v  \n", useLedgerSearch)
 	}
 
 	var parties = ledgers.GetLedgers(companyId, ledgerFilter, ledgerAdditionalFilter)
-	log.Printf("\n [+] Parties Found :: %v  \n", len(parties))
 
 	var partyByName = utils.ToDict(parties, func(party ledgers.MetaLedger) string {
 		return party.Name
@@ -177,21 +173,28 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 			billDate := bill.BillDate.In(istLocation)
 			dueDate := billDate
 			if bill.DueDate != nil {
-				dueDate = *bill.DueDate
+				dueDate = (*bill.DueDate).In(istLocation)
 			}
 			diff := today.Sub(dueDate)
 
 			// Get the difference in days
-			days := uint16(diff.Hours() / 24)
+			days := int(diff.Hours() / 24)
 
+			// Ensure DelayDays is never negative. If days < 0, set it to 0 (or handle according to your logic).
+			var delayDays uint16
+			if days > 0 {
+				delayDays = uint16(days)
+			} else {
+				delayDays = 0
+			}
 			overview.BillDate = &billDate
 			overview.DueDate = &dueDate
-			overview.DelayDays = &days
+			overview.DelayDays = &delayDays
 			overview.IsAdvance = bill.IsAdvance
 
-			if days >= 0 && days <= uint16(setting.OverDueDays) {
+			if delayDays >= 0 && delayDays <= uint16(setting.OverDueDays) {
 				overview.DueAmount = overview.ClosingAmount
-			} else if days > uint16(setting.OverDueDays) {
+			} else if delayDays > uint16(setting.OverDueDays) {
 				overview.OverDueAmount = overview.ClosingAmount
 			}
 			mutex.Lock()
@@ -220,7 +223,6 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 	}
 	wg.Wait()
 
-	log.Printf("\n [+] Parties Summarized :: %v  \n", len(partySummary))
 	var outstandingOverview []OutstandingOverview
 	for partyName, bills := range partySummary {
 		party, exists := partyByName[partyName]
@@ -288,12 +290,180 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 
 		outstandingOverview = utils.Paginate(outstandingOverview, int(filter.Filter.Batch.Limit), int(filter.Filter.Batch.Offset))
 	}
-	log.Printf("\n [+] Party Overviews :: %v  \n", len(outstandingOverview))
-	log.Println("-------------------------------------------------------")
 	// sorting by keys
 	return outstandingOverview
 }
 
-func BillWiseOverview(filter OverviewFilter) {
+func GetBillWiseOverview(companyId string, filter OverviewFilter) []OutstandingOverview {
+	// Ledger Groups Filter
+	var groups = getParentGroups(companyId, filter.IsDebit)
+	if len(filter.Groups) > 0 {
+		groups = utils.Intersection(groups, filter.Groups)
+	}
+	filter.Groups = groups
 
+	var laterSortKeys = make([]string, 6)
+	laterSortKeys[0] = DueWise
+	laterSortKeys[1] = DelayWise
+	laterSortKeys[2] = OverDueWise
+	laterSortKeys[3] = DueDateWise
+	laterSortKeys[4] = CreditLimit
+	laterSortKeys[5] = CreditPeriod
+
+	var usePagination bool = !utils.ContainsString(laterSortKeys, filter.Filter.SortKey)
+
+	var sortKey string
+	switch filter.Filter.SortKey {
+	case GroupWise:
+		sortKey = "LedgerGroupName"
+	case BillDateWise:
+		sortKey = "BillDate.Date"
+	case CreditPeriod:
+		sortKey = "CreditPeriod"
+	default:
+		sortKey = "LedgerName"
+	}
+
+	var billDbFilter = filter
+	billDbFilter.Groups = filter.Groups
+	billDbFilter.Filter.Batch.Apply = usePagination
+	billDbFilter.Filter.Batch.Limit = filter.Filter.Batch.Limit
+	billDbFilter.Filter.Batch.Offset = filter.Filter.Batch.Offset
+	billDbFilter.Filter.SortKey = sortKey
+	billDbFilter.Filter.SortOrder = filter.Filter.SortOrder
+
+	var billAdditionalFilter = []bson.M{
+		{
+			"LedgerGroupName": bson.M{
+				"$in": groups,
+			},
+		},
+	}
+
+	if len(filter.Parties) > 0 {
+		billAdditionalFilter = append(billAdditionalFilter, bson.M{
+			"Name": bson.M{
+				"$in": filter.Parties,
+			},
+		})
+	}
+	if len(filter.Filter.SearchText) > 0 {
+		var searchKey string
+		switch filter.Filter.SearchKey {
+		case GroupWise:
+			searchKey = "LedgerGroupName"
+		case BillWise:
+			searchKey = "Name"
+		case BillDateWise:
+			searchKey = "BillDate.Date"
+		default:
+			searchKey = "Name"
+		}
+		var searchField = osMod.GetFieldBySearchKey(searchKey)
+		var searchFilter = utils.GenerateSearchFilter(filter.Filter.SearchText, searchField)
+		billAdditionalFilter = append(billAdditionalFilter, bson.M{
+			"$and": &searchFilter,
+		})
+	}
+
+	settings, settingsErr := osSettingMod.GetAllSettings(companyId)
+	if settingsErr != nil {
+		return make([]OutstandingOverview, 0)
+	}
+	setting := settings[0]
+	istLocation, _ := time.LoadLocation("Asia/Kolkata")
+
+	var bills = getBills(companyId, billDbFilter, &billAdditionalFilter)
+
+	var partyNames []string
+	var billSummary []OutstandingOverview
+	today := time.Now().UTC()
+	for _, bill := range bills {
+		var overview = OutstandingOverview{
+			PartyName:     bill.LedgerName,
+			LedgerGroup:   *bill.LedgerGroupName,
+			OpeningAmount: bill.OpeningBalance.Value,
+			ClosingAmount: bill.ClosingBalance.Value,
+			DueAmount:     0,
+			OverDueAmount: 0,
+		}
+		partyNames = append(partyNames, bill.LedgerName)
+
+		billDate := bill.BillDate.In(istLocation)
+		dueDate := billDate
+		if bill.DueDate != nil {
+			dueDate = (*bill.DueDate).In(istLocation)
+		}
+		diff := today.Sub(dueDate)
+
+		// Get the difference in days
+		days := int(diff.Hours() / 24)
+
+		// Ensure DelayDays is never negative. If days < 0, set it to 0 (or handle according to your logic).
+		var delayDays uint16
+		if days > 0 {
+			delayDays = uint16(days)
+		} else {
+			delayDays = 0
+		}
+
+		overview.BillDate = &billDate
+		overview.DueDate = &dueDate
+		overview.DelayDays = &delayDays
+		overview.IsAdvance = bill.IsAdvance
+
+		if delayDays >= 0 && delayDays <= uint16(setting.OverDueDays) {
+			overview.DueAmount = overview.ClosingAmount
+		} else if delayDays > uint16(setting.OverDueDays) {
+			overview.OverDueAmount = overview.ClosingAmount
+		}
+
+		billSummary = append(billSummary, overview)
+	}
+
+	var distinctPartyNames = utils.Distinct(partyNames)
+	log.Printf("[+] Distinct Parties...%v\n", len(distinctPartyNames))
+
+	var parties = ledgers.GetByNames(companyId, distinctPartyNames)
+	var partyByName = utils.ToDict(parties, func(party ledgers.MetaLedger) string {
+		return party.Name
+	})
+
+	var billOverview []OutstandingOverview
+	for _, summary := range billSummary {
+		party, exists := partyByName[summary.PartyName]
+		if !exists {
+			continue
+		}
+
+		var overview = summary
+		overview.CreditLimit = party.CreditLimit
+		overview.CreditDays = party.CreditPeriod
+
+		billOverview = append(billOverview, overview)
+	}
+
+	if !usePagination {
+		sortAsc := utils.GetValueBySortOrder(filter.Filter.SortOrder) == 1
+		switch filter.Filter.SortKey {
+		case DueWise:
+			utils.SortByField(billOverview, "DueAmount", sortAsc)
+		case DelayWise:
+			utils.SortByField(billOverview, "DelayDays", sortAsc)
+		case DueDateWise:
+			utils.SortByField(billOverview, "DueDate", sortAsc)
+		case OverDueWise:
+			utils.SortByField(billOverview, "OverDueAmount", sortAsc)
+		case CreditLimit:
+			utils.SortByField(billOverview, "CreditLimit", sortAsc)
+		case CreditPeriod:
+			utils.SortByField(billOverview, "CreditDays", sortAsc)
+		default:
+			utils.SortByField(billOverview, "PartyName", sortAsc)
+		}
+
+		billOverview = utils.Paginate(billOverview, int(filter.Filter.Batch.Limit), int(filter.Filter.Batch.Offset))
+	}
+
+	return billOverview
 }

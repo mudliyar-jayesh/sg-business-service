@@ -241,7 +241,23 @@ func SortBy[T any](slice []T, lessFunc func(i, j T) bool) {
 	})
 }
 
-// SortByField sorts a slice of structs by a specific field name, either in ascending or descending order.
+func Paginate[T any](slice []T, limit, offset int) []T {
+	// Check bounds to avoid slicing out of range
+	if offset > len(slice) {
+		return []T{} // Return empty slice if offset exceeds slice length
+	}
+
+	end := offset + limit
+
+	// Ensure the end index does not exceed the slice length
+	if end > len(slice) {
+		end = len(slice)
+	}
+
+	// Return the sub-slice
+	return slice[offset:end]
+}
+
 func SortByField(slice interface{}, fieldName string, sortByAsc bool) {
 	// Get the value of the slice
 	v := reflect.ValueOf(slice)
@@ -254,16 +270,22 @@ func SortByField(slice interface{}, fieldName string, sortByAsc bool) {
 	// Get the element type of the slice
 	elemType := v.Type().Elem()
 
-	// Ensure the elements of the slice are structs
-	if elemType.Kind() != reflect.Struct {
-		log.Fatalf("SortByField: expected a slice of structs, got a slice of %s", elemType.Kind())
-	}
-
 	// Sort the slice using the sort.Slice function
 	sort.Slice(slice, func(i, j int) bool {
 		// Get the i-th and j-th elements of the slice
 		vi := v.Index(i)
 		vj := v.Index(j)
+
+		// Handle if elements are pointers to structs
+		if elemType.Kind() == reflect.Ptr {
+			vi = vi.Elem() // Dereference pointer to access struct
+			vj = vj.Elem()
+		}
+
+		// Ensure the elements of the slice are structs
+		if vi.Kind() != reflect.Struct || vj.Kind() != reflect.Struct {
+			log.Fatalf("SortByField: expected a slice of structs or pointers to structs, got %s", elemType.Kind())
+		}
 
 		// Get the values of the specified field for the i-th and j-th elements
 		fieldI := vi.FieldByName(fieldName)
@@ -274,15 +296,34 @@ func SortByField(slice interface{}, fieldName string, sortByAsc bool) {
 			log.Fatalf("SortByField: field %s not found in struct %s", fieldName, elemType.Name())
 		}
 
+		// Handle pointer fields, considering nil values
+		if fieldI.Kind() == reflect.Ptr {
+			// Handle nil cases: if one is nil and the other is not, prioritize non-nil value
+			if fieldI.IsNil() && !fieldJ.IsNil() {
+				return sortByAsc
+			}
+			if !fieldI.IsNil() && fieldJ.IsNil() {
+				return !sortByAsc
+			}
+			// If both are non-nil, dereference the pointers
+			if !fieldI.IsNil() && !fieldJ.IsNil() {
+				fieldI = fieldI.Elem()
+				fieldJ = fieldJ.Elem()
+			}
+		}
+
 		// Compare the field values based on their kind
 		var result bool
 		switch fieldI.Kind() {
-		case reflect.Int:
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 			result = fieldI.Int() < fieldJ.Int()
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			// Compare unsigned integers, considering nil as the smallest (0)
+			result = fieldI.Uint() < fieldJ.Uint()
+		case reflect.Float32, reflect.Float64:
+			result = fieldI.Float() < fieldJ.Float()
 		case reflect.String:
 			result = fieldI.String() < fieldJ.String()
-		case reflect.Float64:
-			result = fieldI.Float() < fieldJ.Float()
 		case reflect.Bool:
 			result = fieldI.Bool() && !fieldJ.Bool()
 		case reflect.Struct:
@@ -304,21 +345,4 @@ func SortByField(slice interface{}, fieldName string, sortByAsc bool) {
 		}
 		return result
 	})
-}
-
-func Paginate[T any](slice []T, limit, offset int) []T {
-	// Check bounds to avoid slicing out of range
-	if offset > len(slice) {
-		return []T{} // Return empty slice if offset exceeds slice length
-	}
-
-	end := offset + limit
-
-	// Ensure the end index does not exceed the slice length
-	if end > len(slice) {
-		end = len(slice)
-	}
-
-	// Return the sub-slice
-	return slice[offset:end]
 }
