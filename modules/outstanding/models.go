@@ -89,9 +89,10 @@ type Bill struct {
 }
 
 type OsShareSettings struct {
-	ID         primitive.ObjectID `bson:"_id,omitempty"`
-	CompanyId  string             `bson:"CompanyId"`
-	CutOffDate string             `bson:"CutOffDate"`
+	ID           primitive.ObjectID `bson:"_id,omitempty"`
+	CompanyId    string             `bson:"CompanyId"`
+	CutOffDate   string             `bson:"CutOffDate"`
+	TemplateName *string            `bson:"TemplateName"`
 	//ShowItemDetails bool `bson:"ShowItemDetails"`
 	//MinOsAmount float64 `bson:"MinOsAmount"`
 	DueDays              int                  `bson:"DueDays"`

@@ -11,6 +11,7 @@ const (
 )
 
 const (
+	OsTemplate            string = "OsTemplates"
 	ContactPerson         string = "ContactPerson"
 	FollowUp              string = "FollowUp"
 	Bill                  string = "Bills"

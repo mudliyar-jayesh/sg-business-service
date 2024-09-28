@@ -102,8 +102,14 @@ func main() {
 	http.Handle("/tasks/get/collection", corsMiddleware(http.HandlerFunc(prompts.GetCollectionActionables)))
 	http.Handle("/tasks/update/collection", corsMiddleware(http.HandlerFunc(prompts.UpdateCollectionTask)))
 
-	fmt.Println("Server starting on port 35001...")
-	log.Fatal(http.ListenAndServe(":35001", nil))
+	// templates
+	http.Handle("/template/os/create", corsMiddleware(http.HandlerFunc(osEndpoints.CreateOsTemplates)))
+	http.Handle("/template/os/get/all", corsMiddleware(http.HandlerFunc(osEndpoints.GetAllOsTemplates)))
+	http.Handle("/template/os/get", corsMiddleware(http.HandlerFunc(osEndpoints.GetOsTemplatesByName)))
+
+	fmt.Println("Server starting on port 35002...")
+	log.Fatal(http.ListenAndServe(":35002", nil))
+
 }
 
 /*

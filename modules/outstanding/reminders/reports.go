@@ -30,13 +30,11 @@ func SendEmailReminder(companyId string, ledgerNames []string) error {
 	// Get Outstanding settings from Database for this company
 	settingData, settingErr := configMod.GetAllSettings(companyId)
 	if settingData == nil || len(settingData) > 1 {
-		fmt.Println(settingErr)
 		return settingErr
 	}
 	setting := settingData[0]
 
 	for key, ledger := range ledgerByName {
-		fmt.Println("address ", ledger.Address)
 		collectionFilter := bson.M{
 			"CompanyId":  companyId,
 			"LedgerName": key,
@@ -148,11 +146,21 @@ func SendEmailReminder(companyId string, ledgerNames []string) error {
 		_, err := os.Stat(templatePath)
 
 		if errors.Is(err, os.ErrNotExist) {
-			fmt.Println("%s path does not exists", templatePath)
+			fmt.Printf("\n%v path does not exists\n", templatePath)
 			return err
 		}
 
-		emailBody := handlers.WriteToTemplate(templatePath, content)
+		var emailBody string
+		if setting.TemplateName != nil || len(*setting.TemplateName) > 0 {
+			template := GetByTemplateName(companyId, *setting.TemplateName)
+			if template != nil && len(template.HtmlContent) > 0 {
+				emailBody = handlers.WriteToTemplateFromString(template.HtmlContent, content)
+			} else {
+				emailBody = handlers.WriteToTemplate(templatePath, content)
+			}
+		} else {
+			emailBody = handlers.WriteToTemplate(templatePath, content)
+		}
 		emailSetting := setting.EmailSetting
 
 		var emailSettings = models.EmailSettings{
@@ -165,7 +173,6 @@ func SendEmailReminder(companyId string, ledgerNames []string) error {
 			BodyType:   1,
 		}
 
-		fmt.Printf("settings: \n", emailSettings.To)
 		// send email
 		err = handlers.SendEmail(emailSettings)
 		if err != nil {
