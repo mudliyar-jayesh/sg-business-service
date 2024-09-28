@@ -34,7 +34,7 @@ func SendEmailReminder(companyId string, ledgerNames []string) error {
 	}
 	setting := settingData[0]
 
-	for key, ledger := range ledgerByName {
+	for key, _ := range ledgerByName {
 		collectionFilter := bson.M{
 			"CompanyId":  companyId,
 			"LedgerName": key,
