@@ -340,10 +340,10 @@ func GetBillWiseOverview(companyId string, filter OverviewFilter) []OutstandingO
 		},
 	}
 
-	if len(filter.Parties) > 0 {
+	if len(billDbFilter.Parties) > 0 {
 		billAdditionalFilter = append(billAdditionalFilter, bson.M{
-			"Name": bson.M{
-				"$in": filter.Parties,
+			"LedgerName": bson.M{
+				"$in": billDbFilter.Parties,
 			},
 		})
 	}
@@ -374,6 +374,7 @@ func GetBillWiseOverview(companyId string, filter OverviewFilter) []OutstandingO
 	istLocation, _ := time.LoadLocation("Asia/Kolkata")
 
 	var bills = getBills(companyId, billDbFilter, &billAdditionalFilter)
+	log.Printf("[+] Bill Count: %v\n", len(bills))
 
 	var partyNames []string
 	var billSummary []OutstandingOverview
