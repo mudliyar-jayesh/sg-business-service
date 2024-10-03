@@ -227,48 +227,47 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 	wg.Wait()
 
 	var outstandingOverview []OutstandingOverview
-	for partyName, bills := range partySummary {
-		party, exists := partyByName[partyName]
-		if !exists {
-			continue
-		}
-
+	for _, partyLedger := range parties {
 		var overview = OutstandingOverview{
-			PartyName:          party.Name,
-			LedgerGroup:        party.Group,
-			CreditLimit:        party.CreditLimit,
-			CreditDays:         party.CreditPeriod,
+			PartyName:          partyLedger.Name,
+			LedgerGroup:        partyLedger.Group,
+			CreditLimit:        partyLedger.CreditLimit,
+			CreditDays:         partyLedger.CreditPeriod,
 			OpeningAmount:      0,
 			ClosingAmount:      0,
 			DueAmount:          0,
 			OverDueAmount:      0,
 			PendingPercentage:  nil,
 			ReceivedPercentage: nil,
-			TotalBills:         len(bills),
+			TotalBills:         0,
 		}
+		summary, exist := partySummary[partyLedger.Name]
+		if exist {
+			for _, bill := range summary {
+				overview.OpeningAmount += bill.OpeningAmount
+				if filter.DeductAdvancePayment && bill.IsAdvance != nil && *bill.IsAdvance {
+					overview.ClosingAmount -= bill.ClosingAmount
+					overview.DueAmount -= bill.DueAmount
+					overview.OverDueAmount -= bill.OverDueAmount
+					continue
+				}
 
-		for _, bill := range bills {
-			overview.OpeningAmount += bill.OpeningAmount
-			if filter.DeductAdvancePayment && bill.IsAdvance != nil && *bill.IsAdvance {
-				overview.ClosingAmount -= bill.ClosingAmount
-				overview.DueAmount -= bill.DueAmount
-				overview.OverDueAmount -= bill.OverDueAmount
-				continue
+				overview.ClosingAmount += bill.ClosingAmount
+				overview.DueAmount += bill.DueAmount
+				overview.OverDueAmount += bill.OverDueAmount
 			}
+			var receivedAmount = overview.OpeningAmount - overview.ClosingAmount
+			var percentReceived float64 = 0
+			if overview.OpeningAmount > 0 {
+				percentReceived = (receivedAmount / overview.OpeningAmount) * 100
+			}
+			var percentPending = 100 - percentReceived
+			overview.PendingPercentage = &percentPending
+			overview.ReceivedPercentage = &percentReceived
+		}
 
-			overview.ClosingAmount += bill.ClosingAmount
-			overview.DueAmount += bill.DueAmount
-			overview.OverDueAmount += bill.OverDueAmount
-		}
-		var receivedAmount = overview.OpeningAmount - overview.ClosingAmount
-		var percentReceived float64 = 0
-		if overview.OpeningAmount > 0 {
-			percentReceived = (receivedAmount / overview.OpeningAmount) * 100
-		}
-		var percentPending = 100 - percentReceived
-		overview.PendingPercentage = &percentPending
-		overview.ReceivedPercentage = &percentReceived
 		outstandingOverview = append(outstandingOverview, overview)
+
 	}
 	if !usePagination {
 		sortAsc := utils.GetValueBySortOrder(filter.Filter.SortOrder) == 1
