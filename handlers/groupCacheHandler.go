@@ -1,14 +1,15 @@
 package handlers
 
 import (
+	"context"
+	"go.mongodb.org/mongo-driver/bson"
+	"log"
 	"strings"
-    "go.mongodb.org/mongo-driver/bson"
-    "context"
 )
 
 // Group represents the model equivalent to the C# Group model
 type Group struct {
-    GUID string
+	GUID   string
 	Name   string
 	Parent string
 }
@@ -35,8 +36,8 @@ func NewGroupCacheManager() *GroupCacheManager {
 var CachedGroups *GroupCacheManager
 
 func MakeGroupCache() {
-    CachedGroups = NewGroupCacheManager()
-    CachedGroups.BuildCache()
+	CachedGroups = NewGroupCacheManager()
+	CachedGroups.BuildCache()
 }
 
 // FindNode recursively finds a node by its value
@@ -120,33 +121,39 @@ func (gcm *GroupCacheManager) GetChildrenNames(companyId, parent string) []strin
 	return parentGroups
 }
 
-
 func (gcm *GroupCacheManager) BuildCache() {
-    collection := GetCollection("NewTallyDesktopSync", "Groups")
-    mongoHandler := NewMongoHandler(collection)
-    results := mongoHandler.FindDocuments(DocumentFilter {
-        Filter: bson.M {},
-        Limit: 0,
-        Offset: 0,
-        UsePagination: false,
-        Ctx: context.TODO(),
-    })
+	collection := GetCollection("NewTallyDesktopSync", "Groups")
+	mongoHandler := NewMongoHandler(collection)
+	results := mongoHandler.FindDocuments(DocumentFilter{
+		Filter:        bson.M{},
+		Limit:         0,
+		Offset:        0,
+		UsePagination: false,
+		Ctx:           context.TODO(),
+	})
+	if results.Err != nil {
+		log.Printf("[+] Coult not get companies")
+		panic("No Group Cache Built")
+	}
+	log.Printf("[+] Building Cache for %v companies \n", len(results.Data))
 
-    companyGroups := make(map[string][]Group)
-    for _, group := range results.Data {
-        if group["GUID"] != nil {
-            newGroup := Group {
-                GUID: group["GUID"].(string),
-                Parent: group["Parent"].(string),
-                Name: group["Name"].(string),
-            }
-            key := (newGroup.GUID)[:36]
-            companyGroups[key] = append(companyGroups[key], newGroup)
-        }
-    }
+	companyGroups := make(map[string][]Group)
+	for _, group := range results.Data {
+		if group["GUID"] != nil {
+			newGroup := Group{
+				GUID:   group["GUID"].(string),
+				Parent: group["Parent"].(string),
+				Name:   group["Name"].(string),
+			}
+			key := (newGroup.GUID)[:36]
+			companyGroups[key] = append(companyGroups[key], newGroup)
+		}
+	}
 
-    for comanyId, groupList := range companyGroups {
-        gcm.Build(comanyId, groupList)
-    }
+	for comanyId, groupList := range companyGroups {
+		log.Printf("[+] Building Cache for %s  \n", comanyId)
+		gcm.Build(comanyId, groupList)
+		log.Printf("[+] Cache Built for %s  \n", comanyId)
+	}
 
 }

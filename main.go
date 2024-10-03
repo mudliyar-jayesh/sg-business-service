@@ -112,13 +112,3 @@ func main() {
 	log.Fatal(http.ListenAndServe(":35001", nil))
 
 }
-
-/*
-TODO: Handle Optional Is Advance
-TODO: Credit Days in Party Outstanding
-TODO: partyWise Rating
-TODO: Reference Number
-TODO: Sales Order Number and Sales ORder Date
-TODO: Exclude Parties while Sending The Email Reminder
-TODO: Public View Of Bills
-*/
