@@ -135,7 +135,6 @@ func (gcm *GroupCacheManager) BuildCache() {
 		log.Printf("[+] Coult not get companies")
 		panic("No Group Cache Built")
 	}
-	log.Printf("[+] Building Cache for %v companies \n", len(results.Data))
 
 	companyGroups := make(map[string][]Group)
 	for _, group := range results.Data {

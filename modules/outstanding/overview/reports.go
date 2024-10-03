@@ -8,7 +8,6 @@ import (
 	osSettingMod "sg-business-service/modules/outstanding/settings"
 	"sg-business-service/utils"
 
-	"log"
 	"math"
 	"sync"
 	"time"
@@ -70,7 +69,7 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 	var ledgerAdditionalFilter = []bson.M{
 		{
 			"Group": bson.M{
-				"$in": groups,
+				"$in": filter.Groups,
 			},
 		},
 	}
@@ -219,6 +218,9 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 		wg.Add(1)
 		var startIndex = int(batchSize) * batchNumber
 		var endIndex = startIndex + int(batchSize)
+		if endIndex >= len(parties) {
+			endIndex = len(parties) - 1
+		}
 		var partyChunk = parties[startIndex:endIndex]
 		go batchFunc(partyChunk, &wg)
 	}
@@ -332,11 +334,12 @@ func GetBillWiseOverview(companyId string, filter OverviewFilter) []OutstandingO
 	billDbFilter.Filter.Batch.Offset = filter.Filter.Batch.Offset
 	billDbFilter.Filter.SortKey = sortKey
 	billDbFilter.Filter.SortOrder = filter.Filter.SortOrder
+	billDbFilter.Parties = filter.Parties
 
 	var billAdditionalFilter = []bson.M{
 		{
 			"LedgerGroupName": bson.M{
-				"$in": groups,
+				"$in": billDbFilter.Groups,
 			},
 		},
 	}
@@ -375,7 +378,6 @@ func GetBillWiseOverview(companyId string, filter OverviewFilter) []OutstandingO
 	istLocation, _ := time.LoadLocation("Asia/Kolkata")
 
 	var bills = getBills(companyId, billDbFilter, &billAdditionalFilter)
-	log.Printf("[+] Bill Count: %v\n", len(bills))
 
 	var partyNames []string
 	var billSummary []OutstandingOverview
@@ -425,7 +427,6 @@ func GetBillWiseOverview(companyId string, filter OverviewFilter) []OutstandingO
 	}
 
 	var distinctPartyNames = utils.Distinct(partyNames)
-	log.Printf("[+] Distinct Parties...%v\n", len(distinctPartyNames))
 
 	var parties = ledgers.GetByNames(companyId, distinctPartyNames)
 	var partyByName = utils.ToDict(parties, func(party ledgers.MetaLedger) string {
