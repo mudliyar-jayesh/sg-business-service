@@ -50,4 +50,5 @@ type OutstandingOverview struct {
 	ReceivedPercentage *float64
 	PendingPercentage  *float64
 	IsAdvance          *bool
+	Bills              *[]OutstandingOverview
 }

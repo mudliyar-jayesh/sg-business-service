@@ -243,8 +243,11 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 		}
 		summary, exist := partySummary[partyLedger.Name]
 		if exist {
+			overview.Bills = &summary
+			var billCount int
 			for _, bill := range summary {
 				overview.OpeningAmount += bill.OpeningAmount
+				billCount += 1
 				if filter.DeductAdvancePayment && bill.IsAdvance != nil && *bill.IsAdvance {
 					overview.ClosingAmount -= bill.ClosingAmount
 					overview.DueAmount -= bill.DueAmount
@@ -264,6 +267,7 @@ func GetPartyWiseOverview(companyId string, filter OverviewFilter) []Outstanding
 			var percentPending = 100 - percentReceived
 			overview.PendingPercentage = &percentPending
 			overview.ReceivedPercentage = &percentReceived
+			overview.TotalBills = billCount
 		}
 
 		outstandingOverview = append(outstandingOverview, overview)
