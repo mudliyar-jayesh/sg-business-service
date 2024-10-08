@@ -52,3 +52,23 @@ type OutstandingOverview struct {
 	IsAdvance          *bool
 	Bills              *[]OutstandingOverview
 }
+
+type AgingOverview struct {
+	PartyName          string
+	LedgerGroup        string
+	CreditLimit        *string
+	CreditDays         *string
+	TotalBills         int
+	BillNumber         *string
+	BillDate           *time.Time
+	DueDate            *time.Time
+	DelayDays          *uint16
+	OpeningAmount      float64
+	ClosingAmount      float64
+	Above30          float64
+	Above60          float64
+	Above90          float64
+	Above120          float64
+	IsAdvance          *bool
+	Bills              *[]AgingOverview
+}

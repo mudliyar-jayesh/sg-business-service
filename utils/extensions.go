@@ -103,6 +103,16 @@ func ToDict[T any, K comparable](items []T, keySelector func(T) K) map[K]T {
 	}
 	return dict
 }
+func Where[S any](source []S, predicate func(S) bool) []S {
+	var result []S
+	for _, s := range source {
+		if predicate(s) {
+			result = append(result, s)
+		}
+	}
+	return result
+}
+
 
 func Select[S any, T any](source []S, selector func(S) T) []T {
 	result := make([]T, len(source))

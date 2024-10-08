@@ -251,4 +251,30 @@ func GetDistinct[T any](handler *MongoHandler, fieldName string, filter bson.M) 
 	}
 
 	return distinctValues, nil
+
+}
+func AggregateCollection[T any](dbName string, collectionName string, pipeline mongo.Pipeline) ([]T, error) {
+	// Select the database and collection
+	collection := Client.Database(dbName).Collection(collectionName)
+	ctx := context.TODO()
+
+	// Execute the aggregation
+	cursor, err := collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var results []T
+
+	// Decode the cursor into the provided generic slice of structs
+	if err := cursor.All(ctx, &results); err != nil {
+		return nil, err
+	}
+
+	if err := cursor.Err(); err != nil {
+		return results, err
+	}
+
+	return results, nil
 }
