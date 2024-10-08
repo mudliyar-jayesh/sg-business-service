@@ -6,6 +6,22 @@ import (
 	"sg-business-service/utils"
 )
 
+func GetUpcomingOverview(res http.ResponseWriter, req *http.Request) {
+	companyId := req.Header.Get("CompanyId")
+	durationType := req.URL.Query().Get("durationType")
+
+	reqBody, err := utils.ReadRequestBody[overview.OverviewFilter](req)
+	if err != nil {
+		http.Error(res, "Unable to read request body", http.StatusBadRequest)
+		return
+	}
+
+	var billOverview = overview.GetUpcomingBillsOverview(companyId, *reqBody, durationType)
+
+	response := utils.NewResponseStruct(billOverview, len(billOverview))
+	response.ToJson(res)
+}
+
 func GetAgingOverview(res http.ResponseWriter, req *http.Request) {
 	companyId := req.Header.Get("CompanyId")
 	applyRange := utils.GetBoolFromQuery(req, "applyRange")
@@ -16,7 +32,7 @@ func GetAgingOverview(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-  var partyOverview = overview.GetAgingOverview(companyId, applyRange, *reqBody)
+	var partyOverview = overview.GetAgingOverview(companyId, applyRange, *reqBody)
 	response := utils.NewResponseStruct(partyOverview, len(partyOverview))
 	response.ToJson(res)
 

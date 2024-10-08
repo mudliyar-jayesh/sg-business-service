@@ -9,8 +9,8 @@ import (
 	"sg-business-service/handlers"
 	dspEndpoints "sg-business-service/modules/dsp/endpoints"
 	osEndpoints "sg-business-service/modules/outstanding/endpoints"
-  vchEndpoints "sg-business-service/modules/vouchers/endpoints"
 	prompts "sg-business-service/modules/promptEngine/endpoints"
+	vchEndpoints "sg-business-service/modules/vouchers/endpoints"
 )
 
 func corsMiddleware(next http.Handler) http.Handler {
@@ -47,6 +47,7 @@ func main() {
 	http.Handle("/os-setting/get", corsMiddleware(http.HandlerFunc(endpoints.GetSetting)))
 
 	// outstanding endpoints
+	http.Handle("/upcoming/overview", corsMiddleware(http.HandlerFunc(osEndpoints.GetUpcomingOverview)))
 	http.Handle("/aging/overview", corsMiddleware(http.HandlerFunc(osEndpoints.GetAgingOverview)))
 	http.Handle("/os/overview", corsMiddleware(http.HandlerFunc(osEndpoints.GetPartyOverview)))
 	http.Handle("/os/bill-overview", corsMiddleware(http.HandlerFunc(osEndpoints.GetBillOverview)))
@@ -110,10 +111,9 @@ func main() {
 	http.Handle("/template/os/get/all", corsMiddleware(http.HandlerFunc(osEndpoints.GetAllOsTemplates)))
 	http.Handle("/template/os/get", corsMiddleware(http.HandlerFunc(osEndpoints.GetOsTemplatesByName)))
 
-  // vouchers
+	// vouchers
 	http.Handle("/vouchers/get/all", corsMiddleware(http.HandlerFunc(vchEndpoints.GetVoucherInfo)))
 
 	fmt.Println("Server starting on port 35001...")
 	log.Fatal(http.ListenAndServe(":35001", nil))
 }
-

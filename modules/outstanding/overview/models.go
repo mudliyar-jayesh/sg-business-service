@@ -54,21 +54,35 @@ type OutstandingOverview struct {
 }
 
 type AgingOverview struct {
-	PartyName          string
-	LedgerGroup        string
-	CreditLimit        *string
-	CreditDays         *string
-	TotalBills         int
-	BillNumber         *string
-	BillDate           *time.Time
-	DueDate            *time.Time
-	DelayDays          *uint16
-	OpeningAmount      float64
-	ClosingAmount      float64
-	Above30          float64
-	Above60          float64
-	Above90          float64
-	Above120          float64
-	IsAdvance          *bool
-	Bills              *[]AgingOverview
+	PartyName     string
+	LedgerGroup   string
+	CreditLimit   *string
+	CreditDays    *string
+	TotalBills    int
+	BillNumber    *string
+	BillDate      *time.Time
+	DueDate       *time.Time
+	DelayDays     *uint16
+	OpeningAmount float64
+	ClosingAmount float64
+	Above30       float64
+	Above60       float64
+	Above90       float64
+	Above120      float64
+	IsAdvance     *bool
+	Bills         *[]AgingOverview
+}
+
+// PartySummary represents the summary of bills for a party.
+type PartySummary struct {
+	PartyName   string  `json:"party_name"`
+	TotalAmount float64 `json:"total_amount"`
+	Bills       []Bill  `json:"bills"`
+}
+
+// DurationSummary groups parties and their bills under a duration key (Daily, Weekly, Monthly, etc.).
+type DurationSummary struct {
+	DurationKey string         `json:"duration_key"`
+	TotalAmount float64        `json:"total_amount"`
+	Parties     []PartySummary `json:"parties"`
 }
