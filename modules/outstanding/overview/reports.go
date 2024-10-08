@@ -701,7 +701,7 @@ func GetUpcomingBillsOverview(companyId string, filter OverviewFilter, durationT
 	var ledgerFilter = models.RequestFilter{}
 	ledgerFilter.Batch.Apply = false
 	ledgerFilter.SortKey = "Name"
-	ledgerFilter.SortOrder = filter.Filter.SortOrder
+	ledgerFilter.SortOrder = "asc"
 
 	// Additional filters to get ledgers
 	var ledgerAdditionalFilter = []bson.M{
