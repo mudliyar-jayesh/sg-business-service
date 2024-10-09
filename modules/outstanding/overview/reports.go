@@ -697,142 +697,110 @@ func GetUpcomingBillsOverview(companyId string, filter OverviewFilter, durationT
 	}
 	filter.Groups = groups
 
-	// Prepare base filter for ledger entries
-	var ledgerFilter = models.RequestFilter{}
-	ledgerFilter.Batch.Apply = false
-	ledgerFilter.SortKey = "Name"
-	ledgerFilter.SortOrder = "asc"
+	// Phase 1: Group bills by duration keys, without fetching all bills
+	istLocation, _ := time.LoadLocation("Asia/Kolkata")
+	today := time.Now().In(istLocation)
 
-	// Additional filters to get ledgers
-	var ledgerAdditionalFilter = []bson.M{
+	durationKeys := utils.GetDurationKeys(durationType, int(filter.Filter.Batch.Limit), int(filter.Filter.Batch.Offset))
+
+	billFilter := []bson.M{
 		{
-			"Group": bson.M{
-				"$in": filter.Groups,
+			"LedgerGroupName": bson.M{
+				"$in": groups,
+			},
+		},
+		{
+			"$expr": bson.M{
+				"$and": []bson.M{
+					{
+						"$gte": []interface{}{
+							bson.M{"$ifNull": []interface{}{"$BillCreditPeriod.DueDate", "$BillDate.Date"}},
+							durationKeys.StartDate, // startDate is a time.Time object
+						},
+					},
+					{
+						"$lte": []interface{}{
+							bson.M{"$ifNull": []interface{}{"$BillCreditPeriod.DueDate", "$BillDate.Date"}},
+							durationKeys.EndDate, // endDate is a time.Time object
+						},
+					},
+				},
 			},
 		},
 	}
 
-	if len(filter.Parties) > 0 {
-		ledgerAdditionalFilter = append(ledgerAdditionalFilter, bson.M{
-			"Name": bson.M{
-				"$in": filter.Parties,
-			},
-		})
+	// Fetch the bills for each party
+	filter.Filter.Batch.Apply = false
+	bills := getBills(companyId, filter, &billFilter)
+
+	durationSummary := map[string][]Bill{}
+	for _, durationKey := range durationKeys.Keys {
+		durationSummary[durationKey] = make([]Bill, 0)
 	}
 
-	// Fetch ledgers (parties)
-	var parties = ledgers.GetLedgers(companyId, ledgerFilter, ledgerAdditionalFilter)
-
-	// Initialize a map to store upcoming bills by party and duration
-	var upcomingSummary = make(map[string]map[string][]Bill, 0)
-	istLocation, _ := time.LoadLocation("Asia/Kolkata")
-
-	var mutex sync.Mutex
-
-	// Function to aggregate upcoming bills for a chunk of parties
-	var batchFunc = func(partyChunk []ledgers.MetaLedger, wait *sync.WaitGroup) {
-		defer wait.Done()
-		partyNames := utils.Select(partyChunk, func(party ledgers.MetaLedger) string { return party.Name })
-
-		// Filter for bills with future due dates
-		billFilter := []bson.M{
-			{
-				"LedgerName": bson.M{
-					"$in": partyNames,
-				},
-			},
+	for _, bill := range bills {
+		dueDate := bill.BillDate.In(istLocation)
+		if bill.DueDate != nil {
+			dueDate = bill.DueDate.In(istLocation)
 		}
 
-		// Fetch the bills for each party
-		var bills = getBills(companyId, filter, &billFilter)
-		if len(bills) < 1 {
-			return
+		if dueDate.Before(today) {
+			continue
 		}
 
-		today := time.Now()
-		// Group bills based on the chosen duration (Daily, Weekly, Monthly, Quarterly, Yearly)
-		for _, bill := range bills {
-			billDate := bill.BillDate.In(istLocation)
-			dueDate := billDate
-			if bill.DueDate != nil {
-				dueDate = (*bill.DueDate).In(istLocation)
-			}
-
-			if dueDate.Before(today) {
-				continue
-			}
-
-			partyName := bill.LedgerName
-
-			// Choose grouping logic based on durationType
-			var key string
-			switch durationType {
-			case "Daily":
-				key = dueDate.Format("2006-01-02") // Day-wise
-			case "Weekly":
-				_, week := dueDate.ISOWeek() // Week-wise
-				key = fmt.Sprintf("%d-W%d", dueDate.Year(), week)
-			case "Monthly":
-				key = dueDate.Format("2006-01") // Month-wise
-			case "Quarterly":
-				quarter := (dueDate.Month()-1)/3 + 1 // Quarter-wise
-				key = fmt.Sprintf("%d-Q%d", dueDate.Year(), quarter)
-			case "Yearly":
-				key = dueDate.Format("2006") // Year-wise
-			default:
-				key = "Unknown" // Fallback in case of an unrecognized duration
-			}
-
-			// Initialize party entry and duration if it doesn't exist
-			mutex.Lock()
-			if _, exists := upcomingSummary[key]; !exists {
-				upcomingSummary[key] = make(map[string][]Bill)
-			}
-			if _, exists := upcomingSummary[key][partyName]; !exists {
-				upcomingSummary[key][partyName] = make([]Bill, 0)
-			}
-			// Add the bill to the respective duration and party
-			upcomingSummary[key][partyName] = append(upcomingSummary[key][partyName], bill)
-			mutex.Unlock()
+		// Choose grouping logic based on durationType
+		var key string
+		switch durationType {
+		case "Daily":
+			key = dueDate.Format("02-Jan-2006")
+		case "Weekly":
+			weekday := int(dueDate.Weekday())
+			startOfWeek := dueDate.AddDate(0, 0, -weekday+1)
+			endOfWeek := startOfWeek.AddDate(0, 0, 6)
+			key = fmt.Sprintf("%s to %s", startOfWeek.Format("2 Jan 2006"), endOfWeek.Format("2 Jan 2006"))
+		case "Monthly":
+			key = dueDate.Format("Jan-2006")
+		case "Yearly":
+			key = dueDate.Format("2006")
+		default:
+			key = "Unknown"
 		}
+
+		// Map duration keys to party names
+		if _, exists := durationSummary[key]; !exists {
+			durationSummary[key] = make([]Bill, 0)
+		}
+		durationSummary[key] = append(durationSummary[key], bill)
 	}
 
-	// Parallelize processing
-	var wg sync.WaitGroup
-	for _, party := range parties {
-		wg.Add(1)
-		go batchFunc([]ledgers.MetaLedger{party}, &wg)
-	}
-	wg.Wait()
-
-	// Prepare the final output format: Duration -> Party -> Bills
 	var result []DurationSummary
-	for durationKey, partyMap := range upcomingSummary {
-		var durationSummary = DurationSummary{
-			DurationKey: durationKey,
+	for duration, overviewBills := range durationSummary {
+		var summary = DurationSummary{
+			DurationKey: duration,
 			TotalAmount: 0,
-			Parties:     make([]PartySummary, 0),
 		}
+		var groupedBills = utils.GroupFor[Bill](overviewBills, func(bill Bill) string {
+			return bill.LedgerName
+		})
 
-		// Calculate the total amount for the duration
-		for partyName, bills := range partyMap {
-			var partyTotal float64 = 0
+		var partySummaries []PartySummary
+		for party, bills := range groupedBills {
 			var partySummary = PartySummary{
-				PartyName:   partyName,
-				TotalAmount: 0,
+				PartyName:   party,
 				Bills:       bills,
+				TotalAmount: 0,
 			}
-
-			// Calculate the total amount for each party
 			for _, bill := range bills {
-				partyTotal += bill.ClosingBalance.Value
+				if bill.ClosingBalance != nil {
+					partySummary.TotalAmount += bill.ClosingBalance.Value
+				}
 			}
-			partySummary.TotalAmount = partyTotal
-			durationSummary.TotalAmount += partyTotal
-			durationSummary.Parties = append(durationSummary.Parties, partySummary)
+			partySummaries = append(partySummaries, partySummary)
+			summary.TotalAmount += partySummary.TotalAmount
 		}
-		result = append(result, durationSummary)
-	}
 
+		summary.Parties = partySummaries
+		result = append(result, summary)
+	}
 	return result
 }

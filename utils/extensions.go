@@ -113,7 +113,6 @@ func Where[S any](source []S, predicate func(S) bool) []S {
 	return result
 }
 
-
 func Select[S any, T any](source []S, selector func(S) T) []T {
 	result := make([]T, len(source))
 	for i, s := range source {
@@ -355,4 +354,87 @@ func SortByField(slice interface{}, fieldName string, sortByAsc bool) {
 		}
 		return result
 	})
+}
+
+type DurationKeys struct {
+	StartDate time.Time
+	EndDate   time.Time
+	Keys      []string
+}
+
+// GetDurationKeys generates duration keys (Daily, Weekly, Monthly, Yearly) with pagination
+func GetDurationKeys(durationType string, pageSize, page int) DurationKeys {
+	var keys []string
+	today := time.Now()
+	startDate := today
+	endDate := today
+	location, _ := time.LoadLocation("Asia/Kolkata") // Use IST location
+
+	switch durationType {
+	case "Daily":
+		keys, startDate, endDate = generateDailyKeys(today, location, pageSize, page)
+	case "Weekly":
+		keys, startDate, endDate = generateWeeklyKeys(today, location, pageSize, page)
+	case "Monthly":
+		keys, startDate, endDate = generateMonthlyKeys(today, location, pageSize, page)
+	case "Yearly":
+		keys, startDate, endDate = generateYearlyKeys(today, location, pageSize, page)
+	default:
+		fmt.Println("Unknown duration type")
+	}
+
+	return DurationKeys{
+		StartDate: startDate,
+		EndDate:   endDate,
+		Keys:      keys,
+	}
+}
+
+func generateDailyKeys(today time.Time, location *time.Location, pageSize, page int) ([]string, time.Time, time.Time) {
+	keys := []string{}
+	for i := 0; i < pageSize; i++ {
+		day := today.AddDate(0, 0, -((page-1)*pageSize + i))
+		keys = append(keys, day.Format("02-Jan-2006"))
+	}
+	startDate := today.AddDate(0, 0, -((page - 1) * pageSize))
+	endDate := today.AddDate(0, 0, -(page * pageSize))
+	return keys, endDate, startDate
+}
+
+func generateWeeklyKeys(today time.Time, location *time.Location, pageSize, page int) ([]string, time.Time, time.Time) {
+	keys := []string{}
+	for i := 0; i < pageSize; i++ {
+		weekOffset := (page-1)*pageSize + i
+		startOfWeek := today.AddDate(0, 0, -int(today.Weekday())-7*weekOffset+1)
+		endOfWeek := startOfWeek.AddDate(0, 0, 6)
+		key := fmt.Sprintf("%s to %s", startOfWeek.Format("2 Jan 2006"), endOfWeek.Format("2 Jan 2006"))
+		keys = append(keys, key)
+	}
+	startDate := today.AddDate(0, 0, -(page-1)*7*pageSize)
+	endDate := today.AddDate(0, 0, -page*7*pageSize)
+	return keys, endDate, startDate
+}
+
+func generateMonthlyKeys(today time.Time, location *time.Location, pageSize, page int) ([]string, time.Time, time.Time) {
+	keys := []string{}
+	for i := 0; i < pageSize; i++ {
+		month := today.AddDate(0, -(page-1)*pageSize-i, 0)
+		key := month.Format("Jan-2006")
+		keys = append(keys, key)
+	}
+	startDate := today.AddDate(0, -(page-1)*pageSize, 0)
+	endDate := today.AddDate(0, -page*pageSize, 0)
+	return keys, endDate, startDate
+}
+
+func generateYearlyKeys(today time.Time, location *time.Location, pageSize, page int) ([]string, time.Time, time.Time) {
+	keys := []string{}
+	for i := 0; i < pageSize; i++ {
+		year := today.AddDate(-(page-1)*pageSize-i, 0, 0)
+		key := year.Format("2006")
+		keys = append(keys, key)
+	}
+	startDate := today.AddDate(-(page-1)*pageSize, 0, 0)
+	endDate := today.AddDate(-page*pageSize, 0, 0)
+	return keys, endDate, startDate
 }

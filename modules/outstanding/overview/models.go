@@ -86,3 +86,8 @@ type DurationSummary struct {
 	TotalAmount float64        `json:"total_amount"`
 	Parties     []PartySummary `json:"parties"`
 }
+
+type durationOverview struct {
+	durationKey string
+	bills       []Bill
+}
