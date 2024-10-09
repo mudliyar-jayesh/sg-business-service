@@ -34,6 +34,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 func main() {
 	mongoConfig := config.LoadMongoConfig()
 	config.LoadEmailTemplate()
+	config.LoadPortalUrl()
 	handlers.ConnectToMongo(mongoConfig)
 	handlers.MakeGroupCache()
 

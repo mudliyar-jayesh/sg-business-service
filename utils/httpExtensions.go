@@ -87,7 +87,7 @@ func (r ResponseStruct) ToJson(res http.ResponseWriter) error {
 }
 
 // GetFromUms is a generic function to get data from a URL and unmarshal it into a slice of type T
-func GetFromUms[T any](url string, headers RequestHeader) *T {
+func GetFromPortal[T any](url string, headers RequestHeader) *T {
 	// Create a new HTTP request
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {

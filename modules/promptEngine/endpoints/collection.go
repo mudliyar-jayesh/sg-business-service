@@ -72,14 +72,11 @@ func GetCollectionActionables(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var url string = config.UmsUrl + "/users/company/" + headers.CompanyId
-	users := utils.GetFromUms[[]config.MetaUser](url, headers)
+	var url string = config.PortalUrl + "/companies/get/users"
+	users := utils.GetFromPortal[[]config.MetaUser](url, headers)
 	userById := utils.ToDict(*users, func(user config.MetaUser) int64 {
-		return int64(user.Id)
+		return int64(user.ID)
 	})
-
-	var infoUrl string = fmt.Sprintf("%v/users/get?userId=%v", config.UmsUrl, headers.UserId)
-	userInfo := utils.GetFromUms[config.MetaUser](infoUrl, headers)
 
 	var tasks = actionables.GetByCompanyId(headers.CompanyId, nil)
 
@@ -90,8 +87,8 @@ func GetCollectionActionables(res http.ResponseWriter, req *http.Request) {
 		if exists {
 			assignedTo = user.Name
 		}
-		if task.AssignedTo == int64(headers.UserId) && userInfo != nil {
-			assignedTo = userInfo.Name
+		if task.AssignedTo == int64(headers.UserId) {
+			assignedTo = "Self"
 		}
 
 		user, exists = userById[task.CreatedBy]
@@ -99,8 +96,8 @@ func GetCollectionActionables(res http.ResponseWriter, req *http.Request) {
 		if exists {
 			createdBy = user.Name
 		}
-		if task.CreatedBy == int64(headers.UserId) && userInfo != nil {
-			createdBy = userInfo.Name
+		if task.CreatedBy == int64(headers.UserId) {
+			createdBy = "Self"
 		}
 		var status string = "Pending"
 		if task.Status == promptEngine.Cancelled {

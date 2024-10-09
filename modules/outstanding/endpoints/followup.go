@@ -168,14 +168,11 @@ func GetTeamFollowReport(res http.ResponseWriter, req *http.Request) {
 
 	var memberOverview []fuMod.FollowUpOverview
 
-	var url string = config.UmsUrl + "/users/company/" + headers.CompanyId
-	users := utils.GetFromUms[[]config.MetaUser](url, headers)
+	var url string = config.PortalUrl + "/companies/get/users"
+	users := utils.GetFromPortal[[]config.MetaUser](url, headers)
 	userById := utils.ToDict(*users, func(user config.MetaUser) uint64 {
-		return user.Id
+		return user.ID
 	})
-
-	var infoUrl string = fmt.Sprintf("%v/users/get?userId=%v", config.UmsUrl, headers.UserId)
-	userInfo := utils.GetFromUms[config.MetaUser](infoUrl, headers)
 
 	for userId, values := range followUpByMember {
 		user, exists := userById[userId]
@@ -183,8 +180,8 @@ func GetTeamFollowReport(res http.ResponseWriter, req *http.Request) {
 		if exists {
 			userName = user.Name
 		}
-		if userId == headers.UserId && userInfo != nil {
-			userName = userInfo.Name
+		if userId == headers.UserId {
+			userName = "Self"
 		}
 		overview := fuMod.FollowUpOverview{
 			Name:           userName,
@@ -298,14 +295,11 @@ func GetUpcomingFollowUpReport(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var url string = config.UmsUrl + "/users/company/" + headers.CompanyId
-	users := utils.GetFromUms[[]config.MetaUser](url, headers)
+	var url string = config.PortalUrl + "/companies/get/users"
+	users := utils.GetFromPortal[[]config.MetaUser](url, headers)
 	userById := utils.ToDict(*users, func(user config.MetaUser) uint64 {
-		return user.Id
+		return user.ID
 	})
-
-	var infoUrl string = fmt.Sprintf("%v/users/get?userId=%v", config.UmsUrl, headers.UserId)
-	currentUserInfo := utils.GetFromUms[config.MetaUser](infoUrl, headers)
 
 	filter := []bson.M{
 		{"CreateDate": bson.M{"$exists": true, "$ne": nil}},
@@ -333,7 +327,7 @@ func GetUpcomingFollowUpReport(res http.ResponseWriter, req *http.Request) {
 		}
 		var personInChargeName string = "Other"
 		if entry.PersonInChargeId == headers.UserId {
-			personInChargeName = currentUserInfo.Name
+			personInChargeName = "Self"
 		} else {
 			userInfo, exists := userById[entry.PersonInChargeId]
 			if exists {
